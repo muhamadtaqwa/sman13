@@ -34,6 +34,7 @@
             color: var(--text-dark);
             min-height: 100vh;
             padding-bottom: 100px;
+            overflow-x: hidden;
         }
 
         /* ========== AWAN DEKORATIF ========== */
@@ -235,6 +236,41 @@
             font-weight: 600;
         }
 
+        /* ========== TOAST NOTIF ========== */
+        .toast-notif {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #1E293B;
+            color: white;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            z-index: 1100;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            transform: translateX(120%);
+            transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+            max-width: 320px;
+            width: fit-content;
+            min-width: 200px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            line-height: 1.4;
+            pointer-events: none;
+        }
+
+        .toast-notif.show {
+            transform: translateX(0);
+        }
+
+        .toast-notif.success {
+            background: #10B981;
+        }
+
+        .toast-notif.error {
+            background: #EF4444;
+        }
+
         /* ========== BOTTOM NAV - SKY PILL ========== */
         .bottom-nav {
             position: fixed;
@@ -297,6 +333,17 @@
         }
 
         /* ========== RESPONSIVE ========== */
+        @media (max-width: 576px) {
+            .toast-notif {
+                top: 16px;
+                right: 16px;
+                max-width: 280px;
+                font-size: 0.78rem;
+                padding: 12px 18px;
+                min-width: 160px;
+            }
+        }
+
         @media (max-width: 400px) {
             .header-modern {
                 padding: 25px 15px 45px 15px;
@@ -330,6 +377,11 @@
     <div class="cloud cloud-1"></div>
     <div class="cloud cloud-2"></div>
 
+    <!-- Toast Notification -->
+    <div id="toastNotif" class="toast-notif">
+        <span id="toastMessage"></span>
+    </div>
+
     <!-- Header Modern -->
     <div class="header-modern d-flex justify-content-between align-items-center">
         <div>
@@ -346,10 +398,9 @@
 
         <!-- Search Bar -->
         <div class="modern-card mb-3 d-flex align-items-center gap-2">
-            <i class="bi bi-search text-secondary fs-5"></i>
-            <input type="text" id="searchInput" class="form-control border-0 shadow-none ps-2"
+            <input type="text" id="searchInput" class="form-control border-0 shadow-none ps-3"
                 placeholder="Cari Username Guru..." value="{{ request('search') }}" style="background: transparent;">
-            @if(request('search'))
+            @if (request('search'))
                 <a href="{{ url('/admin/guru') }}" class="text-secondary fs-5">
                     <i class="bi bi-x-circle-fill"></i>
                 </a>
@@ -357,7 +408,7 @@
         </div>
 
         <!-- Info Hasil Pencarian -->
-        @if(request('search'))
+        @if (request('search'))
             <div class="mb-3 px-1">
                 <small class="text-secondary">
                     Hasil pencarian untuk: <strong>"{{ request('search') }}"</strong>
@@ -400,14 +451,12 @@
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3">
                                 <li><a class="dropdown-item py-2" href="#" data-bs-toggle="modal"
-                                        data-bs-target="#modalUbah{{ $g->id }}"><i
-                                            class="bi bi-pencil-square me-2 text-primary"></i>Ganti Password</a></li>
+                                        data-bs-target="#modalUbah{{ $g->id }}">Ganti Password</a></li>
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
                                 <li><a class="dropdown-item py-2 text-danger" href="#" data-bs-toggle="modal"
-                                        data-bs-target="#modalHapus{{ $g->id }}"><i class="bi bi-trash3-fill me-2"></i>Hapus
-                                        Guru</a></li>
+                                        data-bs-target="#modalHapus{{ $g->id }}">Hapus Guru</a></li>
                             </ul>
                         </div>
                     </div>
@@ -417,14 +466,14 @@
                     <div style="color: #93C5FD; margin-bottom: 15px;"><i class="bi bi-person-video3"
                             style="font-size: 4rem;"></i></div>
                     <h6 class="fw-bold text-dark">
-                        @if(request('search'))
+                        @if (request('search'))
                             Data tidak ditemukan
                         @else
                             Data pengajar belum ada
                         @endif
                     </h6>
                     <p class="small text-secondary mb-0">
-                        @if(request('search'))
+                        @if (request('search'))
                             Coba kata kunci lain atau <a href="/admin/guru">tampilkan semua</a>
                         @else
                             Klik tombol + di pojok kanan atas untuk menambahkan akun guru baru.
@@ -439,7 +488,7 @@
     KUMPULAN MODAL
     ========================================== -->
 
-    @foreach($guru as $g)
+    @foreach ($guru as $g)
         <!-- MODAL GANTI PASSWORD -->
         <div class="modal fade" id="modalUbah{{ $g->id }}" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
@@ -454,17 +503,19 @@
                         <div class="modal-body">
                             <div class="mb-3">
                                 <label class="form-label">Username</label>
-                                <input type="text" class="form-control bg-light text-secondary" value="{{ $g->username }}"
-                                    readonly>
+                                <input type="text" class="form-control bg-light text-secondary"
+                                    value="{{ $g->username }}" readonly>
                             </div>
-                            <div class="mb-2 p-3 rounded-3" style="background-color: #fef2f2; border: 1px dashed #fecdd3;">
+                            <div class="mb-2 p-3 rounded-3"
+                                style="background-color: #fef2f2; border: 1px dashed #fecdd3;">
                                 <label class="form-label text-danger mb-2">Password Baru</label>
                                 <input type="password" name="password" class="form-control" required
-                                    placeholder="Masukkan password baru">
+                                    placeholder="Masukkan password baru" autocomplete="new-password">
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn-light-custom w-100 mb-2" data-bs-dismiss="modal">Batal</button>
+                            <button type="button" class="btn-light-custom w-100 mb-2"
+                                data-bs-dismiss="modal">Batal</button>
                             <button type="submit" class="btn-primary-custom w-100 m-0">Simpan Password</button>
                         </div>
                     </form>
@@ -519,11 +570,12 @@
                         <div class="mb-2">
                             <label class="form-label">Password Login Awal</label>
                             <input type="password" name="password" class="form-control" required
-                                placeholder="Minimal 6 karakter">
+                                placeholder="Minimal 6 karakter" autocomplete="new-password">
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn-light-custom w-100 mb-2" data-bs-dismiss="modal">Batal</button>
+                        <button type="button" class="btn-light-custom w-100 mb-2"
+                            data-bs-dismiss="modal">Batal</button>
                         <button type="submit" class="btn-primary-custom w-100 m-0">Simpan Data Guru</button>
                     </div>
                 </form>
@@ -556,24 +608,42 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        @if(session('success'))
-            Swal.fire({
-                icon: 'success',
-                title: 'Berhasil!',
-                text: '{{ session("success") }}',
-                timer: 2000,
-                showConfirmButton: false,
-                confirmButtonColor: '#3b82f6'
-            });
+        // ========== TOAST NOTIF ==========
+        function showNotif(message, type = 'success') {
+            const toast = document.getElementById('toastNotif');
+            const msg = document.getElementById('toastMessage');
+
+            toast.classList.remove('success', 'error', 'show');
+
+            if (type === 'success') {
+                toast.classList.add('success');
+            } else {
+                toast.classList.add('error');
+            }
+
+            msg.innerText = message;
+            toast.classList.add('show');
+
+            clearTimeout(window.toastTimeout);
+            window.toastTimeout = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        @if (session('success'))
+            showNotif("{{ session('success') }}", 'success');
         @endif
 
-        // Search dengan debounce
+        @if ($errors->any())
+            showNotif("{{ $errors->first() }}", 'error');
+        @endif
+
+        // ========== SEARCH ==========
         const searchInput = document.getElementById('searchInput');
         let debounceTimer;
 
-        searchInput.addEventListener('input', function () {
+        searchInput.addEventListener('input', function() {
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
                 const searchValue = this.value.trim();

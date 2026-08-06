@@ -34,6 +34,7 @@
             color: var(--text-dark);
             min-height: 100vh;
             padding-bottom: 100px;
+            overflow-x: hidden;
         }
 
         /* ========== AWAN DEKORATIF ========== */
@@ -254,6 +255,41 @@
             transform: translateY(0);
         }
 
+        /* ========== TOAST NOTIF ========== */
+        .toast-notif {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #1E293B;
+            color: white;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            z-index: 1100;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            transform: translateX(120%);
+            transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+            max-width: 320px;
+            width: fit-content;
+            min-width: 200px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            line-height: 1.4;
+            pointer-events: none;
+        }
+
+        .toast-notif.show {
+            transform: translateX(0);
+        }
+
+        .toast-notif.success {
+            background: #10B981;
+        }
+
+        .toast-notif.error {
+            background: #EF4444;
+        }
+
         /* ========== BOTTOM NAV - SKY PILL ========== */
         .bottom-nav {
             position: fixed;
@@ -315,7 +351,6 @@
             color: #3B82F6;
         }
 
-        /* Tombol Scan di tengah */
         .nav-center {
             margin-top: -22px;
         }
@@ -359,59 +394,15 @@
             }
         }
 
-        /* ========== TOAST ========== */
-        .toast-notif {
-            position: fixed;
-            bottom: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #1E293B;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 40px;
-            font-weight: 600;
-            font-size: 0.8rem;
-            z-index: 1100;
-            display: none;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
-            max-width: 90%;
-            text-align: center;
-            line-height: 1.4;
-        }
-
-        .toast-notif.success {
-            background: #10B981;
-        }
-
-        .toast-notif.error {
-            background: #EF4444;
-        }
-
-        .toast-notif.show {
-            display: flex;
-            animation: fadeInUp 0.3s ease;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateX(-50%) translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateX(-50%) translateY(0);
-            }
-        }
-
         /* ========== RESPONSIVE ========== */
         @media (max-width: 576px) {
             .toast-notif {
-                font-size: 0.75rem;
-                padding: 8px 16px;
-                bottom: 100px;
+                top: 16px;
+                right: 16px;
+                max-width: 280px;
+                font-size: 0.78rem;
+                padding: 12px 18px;
+                min-width: 160px;
             }
         }
 
@@ -448,6 +439,11 @@
     <div class="cloud cloud-1"></div>
     <div class="cloud cloud-2"></div>
 
+    <!-- Toast Notification -->
+    <div id="toastNotif" class="toast-notif">
+        <span id="toastMessage"></span>
+    </div>
+
     <div class="header-modern d-flex align-items-center justify-content-between">
         <div class="d-flex align-items-center">
             <div class="logo-box me-3">
@@ -475,7 +471,7 @@
                     <label class="form-label">KELAS</label>
                     <select name="kode_kelas" class="form-select" id="pilihKelas" required>
                         <option value="" selected disabled>-- Pilih Kelas --</option>
-                        @foreach($kelasList as $kelas)
+                        @foreach ($kelasList as $kelas)
                             <option value="{{ $kelas->kode_kelas }}">{{ $kelas->kode_kelas }}</option>
                         @endforeach
                     </select>
@@ -516,7 +512,7 @@
                     </div>
 
                     <div id="listKegiatan" style="display: none;">
-                        @foreach($kegiatanList as $kegiatan)
+                        @foreach ($kegiatanList as $kegiatan)
                             <label class="kegiatan-check">
                                 <span class="fw-bold text-dark" style="font-size: 0.9rem;">
                                     {{ $kegiatan->nama_kegiatan }}
@@ -527,13 +523,13 @@
                         @endforeach
                     </div>
                     <div id="textSeharian" class="p-3 info-box text-center">
-                        <small class="text-secondary fw-semibold"><i class="bi bi-info-circle me-1"></i>Siswa ditandai
-                            untuk <b>seluruh kegiatan</b> hari ini.</small>
+                        <small class="text-secondary fw-semibold">Siswa ditandai untuk seluruh kegiatan hari
+                            ini.</small>
                     </div>
                 </div>
 
                 <button type="submit" class="btn btn-submit w-100">
-                    <i class="bi bi-save me-1"></i> Simpan Data Absensi
+                    Simpan
                 </button>
             </form>
         </div>
@@ -553,7 +549,6 @@
             <div class="nav-scan-btn">
                 <i class="bi bi-qr-code-scan"></i>
             </div>
-
         </a>
         <a href="/guru/manual" class="nav-link active">
             <i class="bi bi-journal-medical"></i>
@@ -563,11 +558,6 @@
             <i class="bi bi-gear-fill"></i>
             <span>Profil</span>
         </a>
-    </div>
-
-    <div id="toastNotif" class="toast-notif">
-        <i id="toastIcon" class="bi bi-check-circle-fill"></i>
-        <span id="toastMessage"></span>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -596,12 +586,13 @@
 
         switchSeharian.addEventListener('change', toggleKegiatan);
 
-        pilihKelas.addEventListener('change', function () {
+        pilihKelas.addEventListener('change', function() {
             const kodeKelas = this.value;
 
             if (!kodeKelas) {
                 pilihSiswa.disabled = true;
-                pilihSiswa.innerHTML = '<option value="" selected disabled>-- Pilih Kelas Terlebih Dahulu --</option>';
+                pilihSiswa.innerHTML =
+                    '<option value="" selected disabled>-- Pilih Kelas Terlebih Dahulu --</option>';
                 return;
             }
 
@@ -614,7 +605,8 @@
                     pilihSiswa.disabled = false;
 
                     if (data.length === 0) {
-                        pilihSiswa.innerHTML = '<option value="" selected disabled>-- Tidak ada siswa di kelas ini --</option>';
+                        pilihSiswa.innerHTML =
+                            '<option value="" selected disabled>-- Tidak ada siswa di kelas ini --</option>';
                         return;
                     }
 
@@ -627,7 +619,8 @@
                 .catch(error => {
                     console.error('Error:', error);
                     pilihSiswa.disabled = false;
-                    pilihSiswa.innerHTML = '<option value="" selected disabled>-- Gagal memuat data --</option>';
+                    pilihSiswa.innerHTML =
+                        '<option value="" selected disabled>-- Gagal memuat data --</option>';
                 });
         });
 
@@ -635,43 +628,39 @@
 
         function showNotif(message, type = 'success') {
             const toast = document.getElementById('toastNotif');
-            const icon = document.getElementById('toastIcon');
             const msg = document.getElementById('toastMessage');
 
             toast.classList.remove('success', 'error', 'show');
 
             if (type === 'success') {
                 toast.classList.add('success');
-                icon.className = 'bi bi-check-circle-fill';
-            } else if (type === 'warning') {
-                toast.classList.add('error');
-                icon.className = 'bi bi-exclamation-triangle-fill';
             } else {
                 toast.classList.add('error');
-                icon.className = 'bi bi-x-circle-fill';
             }
 
             msg.innerText = message;
             toast.classList.add('show');
 
-            setTimeout(() => {
+            // Auto hide setelah 3 detik
+            clearTimeout(window.toastTimeout);
+            window.toastTimeout = setTimeout(() => {
                 toast.classList.remove('show');
             }, 3000);
         }
 
-        @if(session('success'))
+        @if (session('success'))
             showNotif("{{ session('success') }}", 'success');
         @endif
 
-        @if(session('error'))
+        @if (session('error'))
             showNotif("{{ session('error') }}", 'error');
         @endif
 
-        @if(session('warning'))
-            showNotif("{{ session('warning') }}", 'warning');
+        @if (session('warning'))
+            showNotif("{{ session('warning') }}", 'error');
         @endif
 
-        @if($errors->any())
+        @if ($errors->any())
             showNotif("{{ $errors->first() }}", 'error');
         @endif
     </script>

@@ -34,6 +34,7 @@
             color: var(--text-dark);
             min-height: 100vh;
             padding-bottom: 100px;
+            overflow-x: hidden;
         }
 
         .cloud {
@@ -147,20 +148,13 @@
             position: relative;
         }
 
-        .search-box i {
-            position: absolute;
-            left: 15px;
-            top: 12px;
-            color: #94A3B8;
-            z-index: 5;
-        }
-
         .search-box input {
-            padding-left: 40px;
+            padding-left: 16px;
             border-radius: 12px;
             background: #F8FAFC;
             border: 1.5px solid var(--border-light);
             font-size: 0.85rem;
+            padding: 10px 12px;
         }
 
         .student-card {
@@ -251,6 +245,41 @@
             line-height: 1.4;
         }
 
+        /* ========== TOAST NOTIF ========== */
+        .toast-notif {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #1E293B;
+            color: white;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            z-index: 1100;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            transform: translateX(120%);
+            transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+            max-width: 320px;
+            width: fit-content;
+            min-width: 200px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            line-height: 1.4;
+            pointer-events: none;
+        }
+
+        .toast-notif.show {
+            transform: translateX(0);
+        }
+
+        .toast-notif.success {
+            background: #10B981;
+        }
+
+        .toast-notif.error {
+            background: #EF4444;
+        }
+
         .bottom-nav {
             position: fixed;
             bottom: 16px;
@@ -332,6 +361,17 @@
             }
         }
 
+        @media (max-width: 576px) {
+            .toast-notif {
+                top: 16px;
+                right: 16px;
+                max-width: 280px;
+                font-size: 0.78rem;
+                padding: 12px 18px;
+                min-width: 160px;
+            }
+        }
+
         @media (max-width: 400px) {
             .header-modern {
                 padding: 20px 15px 25px 15px;
@@ -382,6 +422,11 @@
     <div class="cloud cloud-1"></div>
     <div class="cloud cloud-2"></div>
 
+    <!-- Toast Notification -->
+    <div id="toastNotif" class="toast-notif">
+        <span id="toastMessage"></span>
+    </div>
+
     <div class="header-modern d-flex align-items-center justify-content-between">
         <div class="d-flex align-items-center">
             <div class="logo-box me-3">
@@ -419,7 +464,7 @@
                     <label class="form-label small fw-bold text-secondary mb-1">Pilih Kelas</label>
                     <select class="form-select form-select-sm py-2" id="filterKelas">
                         <option value="semua">Semua Kelas</option>
-                        @foreach($kelasList as $kelas)
+                        @foreach ($kelasList as $kelas)
                             <option value="{{ $kelas->kode_kelas }}">{{ $kelas->kode_kelas }}</option>
                         @endforeach
                     </select>
@@ -427,7 +472,6 @@
             </div>
 
             <div class="search-box">
-                <i class="bi bi-search"></i>
                 <input type="text" class="form-control py-2" placeholder="Cari nama siswa ...">
             </div>
         </div>
@@ -440,7 +484,7 @@
             </div>
             <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold" onclick="cetakPDF()"
                 style="font-size: 0.75rem;">
-                <i class="bi bi-download me-1"></i> Cetak PDF
+                Cetak PDF
             </button>
         </div>
 
@@ -477,6 +521,27 @@
         let currentKelas = 'semua';
         let currentDisplayMode = 'harian';
 
+        function showNotif(message, type = 'success') {
+            const toast = document.getElementById('toastNotif');
+            const msg = document.getElementById('toastMessage');
+
+            toast.classList.remove('success', 'error', 'show');
+
+            if (type === 'success') {
+                toast.classList.add('success');
+            } else {
+                toast.classList.add('error');
+            }
+
+            msg.innerText = message;
+            toast.classList.add('show');
+
+            clearTimeout(window.toastTimeout);
+            window.toastTimeout = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
         function setMode(mode) {
             currentMode = mode;
 
@@ -509,13 +574,25 @@
             loadData();
         }
 
-        if (inputHarian) inputHarian.addEventListener('change', function () { currentWaktu = this.value; loadData(); });
-        if (inputBulanan) inputBulanan.addEventListener('change', function () { currentWaktu = this.value; loadData(); });
-        if (inputTahunan) inputTahunan.addEventListener('change', function () { currentWaktu = this.value; loadData(); });
-        if (filterKelas) filterKelas.addEventListener('change', function () { currentKelas = this.value; loadData(); });
+        if (inputHarian) inputHarian.addEventListener('change', function() {
+            currentWaktu = this.value;
+            loadData();
+        });
+        if (inputBulanan) inputBulanan.addEventListener('change', function() {
+            currentWaktu = this.value;
+            loadData();
+        });
+        if (inputTahunan) inputTahunan.addEventListener('change', function() {
+            currentWaktu = this.value;
+            loadData();
+        });
+        if (filterKelas) filterKelas.addEventListener('change', function() {
+            currentKelas = this.value;
+            loadData();
+        });
 
         if (searchInput) {
-            searchInput.addEventListener('keyup', function () {
+            searchInput.addEventListener('keyup', function() {
                 const keyword = this.value.toLowerCase();
                 const cards = document.querySelectorAll('.student-card');
                 cards.forEach(card => {
@@ -527,7 +604,8 @@
 
         function loadData() {
             const container = document.getElementById('dataRekapContainer');
-            if (container) container.innerHTML = '<div class="text-center py-4 text-secondary"><i class="bi bi-hourglass-split me-2"></i>Memuat data...</div>';
+            if (container) container.innerHTML =
+                '<div class="text-center py-4 text-secondary">Memuat data...</div>';
 
             fetch(`/guru/rekap/filter?mode=${currentMode}&waktu=${currentWaktu}&kelas=${currentKelas}`)
                 .then(response => response.json())
@@ -538,11 +616,13 @@
                         jumlahSiswaElem.innerHTML = `Menampilkan ${result.data.length} Siswa`;
                     } else {
                         if (container) container.innerHTML = '<div class="alert alert-danger">Gagal memuat data</div>';
+                        showNotif('Gagal memuat data', 'error');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
                     if (container) container.innerHTML = '<div class="alert alert-danger">Terjadi kesalahan</div>';
+                    showNotif('Terjadi kesalahan', 'error');
                 });
         }
 
@@ -558,7 +638,9 @@
 
             if (mode === 'harian') {
                 // ========== MODE HARIAN = BADGE WARNA 2 KOLOM ==========
-                const urutanKegiatan = ['Kehadiran Pagi', 'Sholat Dhuha', 'Sholat Dhuhur', 'Keputrian', 'Sholat Ashar', 'Sholat Maghrib', 'Sholat Isya', 'Sholat Subuh'];
+                const urutanKegiatan = ['Kehadiran Pagi', 'Sholat Dhuha', 'Sholat Dhuhur', 'Keputrian', 'Sholat Ashar',
+                    'Sholat Maghrib', 'Sholat Isya', 'Sholat Subuh'
+                ];
 
                 for (let siswa of dataSiswa) {
                     let inisial = siswa.nama_lengkap.substring(0, 2).toUpperCase();
@@ -598,7 +680,9 @@
                 }
             } else {
                 // ========== MODE BULANAN/TAHUNAN = TEKS HADIR/IZIN/ALPA ==========
-                const urutanKegiatan = ['Kehadiran Pagi', 'Sholat Dhuha', 'Sholat Dhuhur', 'Keputrian', 'Sholat Ashar', 'Sholat Maghrib', 'Sholat Isya', 'Sholat Subuh'];
+                const urutanKegiatan = ['Kehadiran Pagi', 'Sholat Dhuha', 'Sholat Dhuhur', 'Keputrian', 'Sholat Ashar',
+                    'Sholat Maghrib', 'Sholat Isya', 'Sholat Subuh'
+                ];
 
                 for (let siswa of dataSiswa) {
                     let inisial = siswa.nama_lengkap.substring(0, 2).toUpperCase();
@@ -615,7 +699,12 @@
                         else if (kegiatan === 'Sholat Subuh') shortName = 'Subuh';
                         else if (kegiatan === 'Keputrian') shortName = 'Keputrian';
 
-                        let data = siswa.kegiatan[kegiatan] || { Hadir: 0, Izin: 0, Sakit: 0, Alpa: 0 };
+                        let data = siswa.kegiatan[kegiatan] || {
+                            Hadir: 0,
+                            Izin: 0,
+                            Sakit: 0,
+                            Alpa: 0
+                        };
                         let hadir = data.Hadir || 0;
                         let izin = (data.Izin || 0) + (data.Sakit || 0);
                         let alpa = data.Alpa || 0;

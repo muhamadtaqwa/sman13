@@ -31,6 +31,7 @@
             color: var(--text-dark);
             min-height: 100vh;
             padding-bottom: 100px;
+            overflow-x: hidden;
         }
 
         /* ========== AWAN & HEADER ========== */
@@ -199,7 +200,46 @@
             letter-spacing: normal;
         }
 
-        /* ========== NAV BAWAH & TOAST ========== */
+        /* ========== TOAST NOTIF ========== */
+        .toast-notif {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #1E293B;
+            color: white;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            z-index: 1100;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            transform: translateX(120%);
+            transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+            max-width: 320px;
+            width: fit-content;
+            min-width: 200px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            line-height: 1.4;
+            pointer-events: none;
+        }
+
+        .toast-notif.show {
+            transform: translateX(0);
+        }
+
+        .toast-notif.success {
+            background: #10B981;
+        }
+
+        .toast-notif.warning {
+            background: #F59E0B;
+        }
+
+        .toast-notif.error {
+            background: #EF4444;
+        }
+
+        /* ========== BOTTOM NAV ========== */
         .bottom-nav {
             position: fixed;
             bottom: 16px;
@@ -260,38 +300,35 @@
             font-size: 1.5rem !important;
         }
 
-        .toast-notif {
-            position: fixed;
-            bottom: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #1E293B;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 40px;
-            font-weight: 600;
-            font-size: 0.8rem;
-            z-index: 1100;
-            display: none;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+        @media (max-width: 576px) {
+            .toast-notif {
+                top: 16px;
+                right: 16px;
+                max-width: 280px;
+                font-size: 0.78rem;
+                padding: 12px 18px;
+                min-width: 160px;
+            }
         }
 
-        .toast-notif.success {
-            background: #10B981;
-        }
+        @media (max-width: 400px) {
+            .header-modern {
+                padding: 20px 15px 25px 15px;
+            }
 
-        .toast-notif.warning {
-            background: #F59E0B;
-        }
+            .bottom-nav {
+                width: 95%;
+                height: 62px;
+                bottom: 10px;
+            }
 
-        .toast-notif.error {
-            background: #EF4444;
-        }
+            .nav-link i {
+                font-size: 1.15rem;
+            }
 
-        .toast-notif.show {
-            display: flex;
+            .nav-link span {
+                font-size: 0.55rem;
+            }
         }
     </style>
 </head>
@@ -377,7 +414,6 @@
     </div>
 
     <div id="toastNotif" class="toast-notif">
-        <i id="toastIcon" class="bi bi-check-circle-fill"></i>
         <span id="toastMessage"></span>
     </div>
 
@@ -389,31 +425,29 @@
         const scannerInput = document.getElementById('usbScannerInput');
         const dropdownKegiatan = document.getElementById('pilihanKegiatan');
 
-        // Fungsi Notifikasi Toast
         function showNotif(message, type = 'success') {
             const toast = document.getElementById('toastNotif');
-            const icon = document.getElementById('toastIcon');
             const msg = document.getElementById('toastMessage');
 
             toast.classList.remove('success', 'warning', 'error', 'show');
 
             if (type === 'success') {
                 toast.classList.add('success');
-                icon.className = 'bi bi-check-circle-fill';
             } else if (type === 'warning') {
                 toast.classList.add('warning');
-                icon.className = 'bi bi-exclamation-triangle-fill';
             } else {
                 toast.classList.add('error');
-                icon.className = 'bi bi-x-circle-fill';
             }
 
             msg.innerText = message;
             toast.classList.add('show');
-            setTimeout(() => { toast.classList.remove('show'); }, 3000);
+
+            clearTimeout(window.toastTimeout);
+            window.toastTimeout = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
         }
 
-        // FUNGSI UTAMA: Mengolah data yang didapat dari Kamera MAUPUN Scanner USB
         function prosesDataScan(decodedText) {
             if (isProcessing) return;
             isProcessing = true;
@@ -421,17 +455,17 @@
             let jenisKegiatan = dropdownKegiatan.value;
 
             fetch("{{ route('guru.scan.store') }}", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    kode_qr: decodedText,
-                    kegiatan: jenisKegiatan
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        kode_qr: decodedText,
+                        kegiatan: jenisKegiatan
+                    })
                 })
-            })
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success') {
@@ -450,25 +484,25 @@
                 });
         }
 
-        // --- LOGIKA 1: KAMERA ---
         function onScanSuccess(decodedText, decodedResult) {
             prosesDataScan(decodedText);
         }
 
-        document.addEventListener("DOMContentLoaded", function () {
+        document.addEventListener("DOMContentLoaded", function() {
             html5QrcodeScanner = new Html5QrcodeScanner("reader", {
                 fps: 10,
-                qrbox: { width: 250, height: 250 },
+                qrbox: {
+                    width: 250,
+                    height: 250
+                },
                 aspectRatio: 1.0,
                 supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
             }, false);
 
-            html5QrcodeScanner.render(onScanSuccess, function (error) { });
+            html5QrcodeScanner.render(onScanSuccess, function(error) {});
         });
 
-        // --- LOGIKA 2: SCANNER USB FISIK ---
-        // Memastikan kursor otomatis kembali ke kolom input USB jika klik di tempat kosong
-        document.addEventListener('click', function (e) {
+        document.addEventListener('click', function(e) {
             const isClickInsideReader = document.getElementById('reader').contains(e.target);
             const isDropdown = e.target.id === 'pilihanKegiatan';
 
@@ -477,14 +511,14 @@
             }
         });
 
-        scannerInput.addEventListener('keypress', function (e) {
+        scannerInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 let decodedText = scannerInput.value.trim();
 
                 if (decodedText !== "") {
-                    scannerInput.value = ""; // Kosongkan kotak
-                    prosesDataScan(decodedText); // Kirim ke server
+                    scannerInput.value = "";
+                    prosesDataScan(decodedText);
                 }
             }
         });

@@ -34,9 +34,9 @@
             color: var(--text-dark);
             min-height: 100vh;
             padding-bottom: 100px;
+            overflow-x: hidden;
         }
 
-        /* ========== AWAN DEKORATIF ========== */
         .cloud {
             position: fixed;
             background: rgba(255, 255, 255, 0.6);
@@ -83,7 +83,6 @@
             }
         }
 
-        /* ========== HEADER SKYEDU ========== */
         .header-modern {
             background: linear-gradient(160deg, #3B82F6 0%, #60A5FA 50%, #93C5FD 100%);
             padding: 35px 20px 50px 20px;
@@ -139,7 +138,6 @@
             transform: scale(0.9);
         }
 
-        /* ========== MODERN CARD SKYEDU ========== */
         .modern-card {
             background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(15px);
@@ -166,7 +164,6 @@
             margin-right: 15px;
         }
 
-        /* ========== FORM & MODAL ========== */
         .modal-content {
             border-radius: 20px;
             border: none;
@@ -221,11 +218,6 @@
             transition: all 0.3s ease;
         }
 
-        .btn-primary-custom:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 35px rgba(59, 130, 246, 0.4);
-        }
-
         .btn-light-custom {
             background: #F1F5F9;
             color: #475569;
@@ -235,7 +227,40 @@
             font-weight: 600;
         }
 
-        /* ========== BOTTOM NAV - SKY PILL ========== */
+        .toast-notif {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #1E293B;
+            color: white;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            z-index: 1100;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            transform: translateX(120%);
+            transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+            max-width: 320px;
+            width: fit-content;
+            min-width: 200px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            line-height: 1.4;
+            pointer-events: none;
+        }
+
+        .toast-notif.show {
+            transform: translateX(0);
+        }
+
+        .toast-notif.success {
+            background: #10B981;
+        }
+
+        .toast-notif.error {
+            background: #EF4444;
+        }
+
         .bottom-nav {
             position: fixed;
             bottom: 16px;
@@ -296,7 +321,17 @@
             color: #3B82F6;
         }
 
-        /* ========== RESPONSIVE ========== */
+        @media (max-width: 576px) {
+            .toast-notif {
+                top: 16px;
+                right: 16px;
+                max-width: 280px;
+                font-size: 0.78rem;
+                padding: 12px 18px;
+                min-width: 160px;
+            }
+        }
+
         @media (max-width: 400px) {
             .header-modern {
                 padding: 25px 15px 45px 15px;
@@ -317,7 +352,6 @@
             }
         }
 
-        /* Search bar */
         #searchInput::placeholder {
             color: #94A3B8;
             font-size: 0.9rem;
@@ -327,11 +361,13 @@
 
 <body>
 
-    <!-- Awan dekoratif -->
     <div class="cloud cloud-1"></div>
     <div class="cloud cloud-2"></div>
 
-    <!-- Header Modern -->
+    <div id="toastNotif" class="toast-notif">
+        <span id="toastMessage"></span>
+    </div>
+
     <div class="header-modern d-flex justify-content-between align-items-center">
         <div>
             <h4 class="fw-bold mb-0" style="font-size: 1.25rem;">Data Siswa</h4>
@@ -342,24 +378,20 @@
         </button>
     </div>
 
-    <!-- KOTAK DAFTAR SISWA -->
     <div class="container px-4" style="margin-top: -20px; position: relative; z-index: 10;">
 
-        <!-- Search Bar -->
         <div class="modern-card mb-3 d-flex align-items-center gap-2">
-            <i class="bi bi-search text-secondary fs-5"></i>
-            <input type="text" id="searchInput" class="form-control border-0 shadow-none ps-2"
+            <input type="text" id="searchInput" class="form-control border-0 shadow-none ps-3"
                 placeholder="Cari NIS, Nama, atau Kelas..." value="{{ request('search') }}"
                 style="background: transparent;">
-            @if(request('search'))
+            @if (request('search'))
                 <a href="{{ url('/admin/students') }}" class="text-secondary fs-5">
                     <i class="bi bi-x-circle-fill"></i>
                 </a>
             @endif
         </div>
 
-        <!-- Info Hasil Pencarian -->
-        @if(request('search'))
+        @if (request('search'))
             <div class="mb-3 px-1">
                 <small class="text-secondary">
                     Hasil pencarian untuk: <strong>"{{ request('search') }}"</strong>
@@ -382,7 +414,6 @@
         <div class="row g-0 mt-1">
             @forelse($students as $student)
                 <div class="col-12">
-                    <!-- Kartu Siswa -->
                     <div class="modern-card d-flex justify-content-between align-items-center">
                         <div class="d-flex align-items-center">
                             <div class="avatar-circle">
@@ -392,7 +423,8 @@
                                 <div class="fw-bold text-dark" style="font-size: 0.95rem;">{{ $student->nama_lengkap }}
                                 </div>
                                 <div class="text-secondary" style="font-size: 0.8rem; font-weight: 500;">
-                                    NIS: {{ $student->nis }} <span class="mx-1">•</span> Kls: {{ $student->kode_kelas }}
+                                    NIS: {{ $student->nis }} <span class="mx-1">•</span> Kls:
+                                    {{ $student->kode_kelas }}
                                 </div>
                             </div>
                         </div>
@@ -403,32 +435,30 @@
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3">
                                 <li><a class="dropdown-item py-2" href="#" data-bs-toggle="modal"
-                                        data-bs-target="#modalUbah{{ $student->nis }}"><i
-                                            class="bi bi-pencil-square me-2 text-primary"></i>Ubah Data</a></li>
+                                        data-bs-target="#modalUbah{{ $student->nis }}">Ubah Data</a></li>
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
                                 <li><a class="dropdown-item py-2 text-danger" href="#" data-bs-toggle="modal"
-                                        data-bs-target="#modalHapus{{ $student->nis }}"><i
-                                            class="bi bi-trash3-fill me-2"></i>Hapus Siswa</a></li>
+                                        data-bs-target="#modalHapus{{ $student->nis }}">Hapus Siswa</a></li>
                             </ul>
                         </div>
                     </div>
                 </div>
             @empty
-                <!-- State Kosong -->
                 <div class="col-12 text-center py-5 mt-3">
-                    <div style="color: #93C5FD; margin-bottom: 15px;"><i class="bi bi-inbox" style="font-size: 4rem;"></i>
+                    <div style="color: #93C5FD; margin-bottom: 15px;"><i class="bi bi-inbox"
+                            style="font-size: 4rem;"></i>
                     </div>
                     <h6 class="fw-bold text-dark">
-                        @if(request('search'))
+                        @if (request('search'))
                             Data tidak ditemukan
                         @else
                             Data masih kosong
                         @endif
                     </h6>
                     <p class="small text-secondary mb-0">
-                        @if(request('search'))
+                        @if (request('search'))
                             Coba kata kunci lain atau <a href="/admin/students">tampilkan semua</a>
                         @else
                             Klik tombol + di pojok kanan atas untuk menambahkan siswa.
@@ -439,12 +469,7 @@
         </div>
     </div>
 
-    <!-- ==========================================
-    KUMPULAN MODAL (Diletakkan di luar container)
-    ========================================== -->
-
-    @foreach($students as $student)
-        <!-- MODAL UBAH SISWA -->
+    @foreach ($students as $student)
         <div class="modal fade" id="modalUbah{{ $student->nis }}" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
@@ -468,17 +493,19 @@
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Kode Kelas</label>
-                                <input type="text" name="kode_kelas" class="form-control" value="{{ $student->kode_kelas }}"
-                                    required>
+                                <input type="text" name="kode_kelas" class="form-control"
+                                    value="{{ $student->kode_kelas }}" required>
                             </div>
-                            <div class="mb-2 p-3 rounded-3" style="background-color: #fef2f2; border: 1px dashed #fecdd3;">
+                            <div class="mb-2 p-3 rounded-3"
+                                style="background-color: #fef2f2; border: 1px dashed #fecdd3;">
                                 <label class="form-label text-danger mb-2">Ganti Password Akun?</label>
                                 <input type="password" name="password" class="form-control"
-                                    placeholder="Kosongkan jika tidak diganti">
+                                    placeholder="Kosongkan jika tidak diganti" autocomplete="new-password">
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn-light-custom w-100 mb-2" data-bs-dismiss="modal">Batal</button>
+                            <button type="button" class="btn-light-custom w-100 mb-2"
+                                data-bs-dismiss="modal">Batal</button>
                             <button type="submit" class="btn-primary-custom w-100 m-0">Simpan Perubahan</button>
                         </div>
                     </form>
@@ -486,7 +513,6 @@
             </div>
         </div>
 
-        <!-- MODAL HAPUS SISWA -->
         <div class="modal fade" id="modalHapus{{ $student->nis }}" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content text-center p-3">
@@ -515,7 +541,6 @@
         </div>
     @endforeach
 
-    <!-- MODAL TAMBAH SISWA -->
     <div class="modal fade" id="modalTambah" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -528,7 +553,8 @@
                     <div class="modal-body">
                         <div class="mb-3">
                             <label class="form-label">NIS (Sebagai Username Login)</label>
-                            <input type="number" name="nis" class="form-control" required placeholder="Ketik NIS Siswa">
+                            <input type="number" name="nis" class="form-control" required
+                                placeholder="Ketik NIS Siswa">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Nama Lengkap</label>
@@ -543,11 +569,12 @@
                         <div class="mb-2">
                             <label class="form-label">Password Login Awal</label>
                             <input type="password" name="password" class="form-control" required
-                                placeholder="Minimal 6 karakter">
+                                placeholder="Minimal 6 karakter" autocomplete="new-password">
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn-light-custom w-100 mb-2" data-bs-dismiss="modal">Batal</button>
+                        <button type="button" class="btn-light-custom w-100 mb-2"
+                            data-bs-dismiss="modal">Batal</button>
                         <button type="submit" class="btn-primary-custom w-100 m-0">Simpan Data Siswa</button>
                     </div>
                 </form>
@@ -555,7 +582,6 @@
         </div>
     </div>
 
-    <!-- Navigasi Bawah - Sky Pill -->
     <div class="bottom-nav">
         <a href="/admin/dashboard" class="nav-link">
             <i class="bi bi-house-door-fill"></i>
@@ -580,25 +606,40 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        // Menampilkan Notifikasi Sukses
-        @if(session('success'))
-            Swal.fire({
-                icon: 'success',
-                title: 'Berhasil!',
-                text: '{{ session("success") }}',
-                timer: 2000,
-                showConfirmButton: false,
-                confirmButtonColor: '#3b82f6'
-            });
+        function showNotif(message, type = 'success') {
+            const toast = document.getElementById('toastNotif');
+            const msg = document.getElementById('toastMessage');
+
+            toast.classList.remove('success', 'error', 'show');
+
+            if (type === 'success') {
+                toast.classList.add('success');
+            } else {
+                toast.classList.add('error');
+            }
+
+            msg.innerText = message;
+            toast.classList.add('show');
+
+            clearTimeout(window.toastTimeout);
+            window.toastTimeout = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        @if (session('success'))
+            showNotif("{{ session('success') }}", 'success');
         @endif
 
-        // Search dengan debounce (500ms)
+        @if ($errors->any())
+            showNotif("{{ $errors->first() }}", 'error');
+        @endif
+
         const searchInput = document.getElementById('searchInput');
         let debounceTimer;
 
-        searchInput.addEventListener('input', function () {
+        searchInput.addEventListener('input', function() {
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
                 const searchValue = this.value.trim();

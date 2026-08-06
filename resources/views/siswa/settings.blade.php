@@ -36,7 +36,6 @@
             padding-bottom: 100px;
         }
 
-        /* ========== AWAN DEKORATIF ========== */
         .cloud {
             position: fixed;
             background: rgba(255, 255, 255, 0.6);
@@ -64,13 +63,25 @@
         }
 
         @keyframes floatCloud {
-            0%, 100% { transform: translateX(0) translateY(0); }
-            25% { transform: translateX(25px) translateY(-12px); }
-            50% { transform: translateX(-12px) translateY(6px); }
-            75% { transform: translateX(18px) translateY(-8px); }
+
+            0%,
+            100% {
+                transform: translateX(0) translateY(0);
+            }
+
+            25% {
+                transform: translateX(25px) translateY(-12px);
+            }
+
+            50% {
+                transform: translateX(-12px) translateY(6px);
+            }
+
+            75% {
+                transform: translateX(18px) translateY(-8px);
+            }
         }
 
-        /* ========== HEADER SKYEDU ========== */
         .header-modern {
             background: linear-gradient(160deg, #3B82F6 0%, #60A5FA 50%, #93C5FD 100%);
             padding: 25px 20px 45px 20px;
@@ -117,7 +128,6 @@
             z-index: 1;
         }
 
-        /* ========== PROFILE CARD ========== */
         .profile-card {
             background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(15px);
@@ -150,7 +160,6 @@
             outline: 2px dashed #93C5FD;
         }
 
-        /* ========== SECTION TITLE ========== */
         .section-title {
             font-size: 0.8rem;
             font-weight: 700;
@@ -172,7 +181,6 @@
             border-radius: 2px;
         }
 
-        /* ========== SETTINGS LIST ========== */
         .settings-list {
             background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(15px);
@@ -230,7 +238,6 @@
             color: #22C55E;
         }
 
-        /* ========== LOGOUT BUTTON ========== */
         .btn-logout {
             background: #FEF2F2;
             color: #DC2626;
@@ -253,7 +260,6 @@
             transform: scale(0.98);
         }
 
-        /* ========== BOTTOM NAV - SKY PILL ========== */
         .bottom-nav {
             position: fixed;
             bottom: 16px;
@@ -314,7 +320,6 @@
             color: #3B82F6;
         }
 
-        /* ========== RESPONSIVE ========== */
         @media (max-width: 400px) {
             .header-modern {
                 padding: 20px 15px 35px 15px;
@@ -339,11 +344,9 @@
 
 <body>
 
-    <!-- Awan dekoratif -->
     <div class="cloud cloud-1"></div>
     <div class="cloud cloud-2"></div>
 
-    <!-- Header -->
     <div class="header-modern d-flex align-items-center justify-content-between">
         <div class="d-flex align-items-center">
             <div class="logo-box me-3">
@@ -359,12 +362,12 @@
 
     <div class="container px-4">
 
-        <!-- Profil Akun Siswa -->
         <div class="profile-card">
             <div class="profile-avatar">
-                {{ strtoupper(substr($siswa->nama_lengkap ?? Auth::user()->username ?? 'S', 0, 1)) }}
+                {{ strtoupper(substr($siswa->nama_lengkap ?? (Auth::user()->username ?? 'S'), 0, 1)) }}
             </div>
-            <h5 class="fw-bold text-dark mb-1">{{ $siswa->nama_lengkap ?? Auth::user()->username ?? 'Nama Siswa' }}</h5>
+            <h5 class="fw-bold text-dark mb-1">{{ $siswa->nama_lengkap ?? (Auth::user()->username ?? 'Nama Siswa') }}
+            </h5>
             <p class="text-secondary mb-2" style="font-size: 0.85rem;">NIS: {{ $siswa->nis ?? Auth::user()->username }}
             </p>
             <div class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold"
@@ -373,17 +376,14 @@
             </div>
         </div>
 
-        <!-- Section Title -->
         <div class="section-title">MENU PENGATURAN</div>
 
-        <!-- List Menu -->
         <div class="settings-list">
             <a href="#" class="settings-item">
                 <div class="d-flex align-items-center">
                     <div class="settings-icon icon-blue"><i class="bi bi-person-vcard"></i></div>
                     <div>
                         <div class="fw-bold" style="font-size: 0.95rem;">Biodata Diri</div>
-                        <div class="text-secondary" style="font-size: 0.7rem;">Lihat detail profil kamu</div>
                     </div>
                 </div>
                 <i class="bi bi-chevron-right text-secondary"></i>
@@ -393,7 +393,6 @@
                     <div class="settings-icon icon-purple"><i class="bi bi-shield-lock-fill"></i></div>
                     <div>
                         <div class="fw-bold" style="font-size: 0.95rem;">Ubah Password</div>
-                        <div class="text-secondary" style="font-size: 0.7rem;">Ganti kata sandi akunmu</div>
                     </div>
                 </div>
                 <i class="bi bi-chevron-right text-secondary"></i>
@@ -403,24 +402,21 @@
                     <div class="settings-icon icon-green"><i class="bi bi-info-circle-fill"></i></div>
                     <div>
                         <div class="fw-bold" style="font-size: 0.95rem;">Tentang Aplikasi</div>
-                        <div class="text-secondary" style="font-size: 0.7rem;">Sistem Informasi Monitoring v1.0</div>
                     </div>
                 </div>
                 <i class="bi bi-chevron-right text-secondary"></i>
             </a>
         </div>
 
-        <!-- Logout -->
         <form action="{{ route('logout') }}" method="POST">
             @csrf
-            <button type="submit" class="btn btn-logout shadow-sm mb-4">
-                <i class="bi bi-box-arrow-right fs-5"></i> Keluar Aplikasi
+            <button type="submit" class="btn-logout shadow-sm mb-4">
+                Logout
             </button>
         </form>
 
     </div>
 
-    <!-- Navigasi Bawah - Sky Pill -->
     <div class="bottom-nav">
         <a href="/siswa/dashboard" class="nav-link">
             <i class="bi bi-qr-code-scan"></i>

@@ -36,7 +36,6 @@
             padding-bottom: 100px;
         }
 
-        /* ========== AWAN DEKORATIF ========== */
         .cloud {
             position: fixed;
             background: rgba(255, 255, 255, 0.6);
@@ -83,7 +82,6 @@
             }
         }
 
-        /* ========== HEADER SKYEDU ========== */
         .header-modern {
             background: linear-gradient(160deg, #3B82F6 0%, #60A5FA 50%, #93C5FD 100%);
             padding: 25px 20px 45px 20px;
@@ -142,7 +140,6 @@
             z-index: 1;
         }
 
-        /* ========== QR CARD ========== */
         .qr-card {
             background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(15px);
@@ -217,9 +214,7 @@
         }
 
         .student-class {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
+            display: inline-block;
             background: #F0F4FF;
             color: #1E40AF;
             padding: 6px 16px;
@@ -227,11 +222,6 @@
             font-size: 0.85rem;
             font-weight: 600;
             border: 1px solid #DBEAFE;
-        }
-
-        .student-class i {
-            font-size: 0.9rem;
-            color: #3B82F6;
         }
 
         .nis-badge {
@@ -243,11 +233,8 @@
             letter-spacing: 0.3px;
         }
 
-        /* ========== DOWNLOAD QR BUTTON ========== */
         .btn-download-qr {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
+            display: inline-block;
             background: linear-gradient(135deg, #3B82F6, #60A5FA);
             color: white;
             padding: 10px 24px;
@@ -272,7 +259,6 @@
             transform: translateY(0);
         }
 
-        /* ========== SECTION TITLE ========== */
         .section-title {
             font-size: 0.7rem;
             font-weight: 700;
@@ -292,7 +278,6 @@
             border-radius: 2px;
         }
 
-        /* ========== ACTIVITY CARD ========== */
         .activity-card {
             background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(10px);
@@ -349,7 +334,6 @@
             color: #64748B;
         }
 
-        /* ========== ALERT ========== */
         .alert-custom {
             position: fixed;
             top: 20px;
@@ -374,7 +358,6 @@
             }
         }
 
-        /* ========== BOTTOM NAV - SKY PILL ========== */
         .bottom-nav {
             position: fixed;
             bottom: 16px;
@@ -435,7 +418,6 @@
             color: #3B82F6;
         }
 
-        /* ========== RESPONSIVE ========== */
         @media (max-width: 400px) {
             .header-modern {
                 padding: 20px 15px 35px 15px;
@@ -460,26 +442,23 @@
 
 <body>
 
-    <!-- Awan dekoratif -->
     <div class="cloud cloud-1"></div>
     <div class="cloud cloud-2"></div>
 
-    <!-- ✅ Alert Sukses/Error -->
-    @if(session('success'))
+    @if (session('success'))
         <div class="alert alert-success alert-custom alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}
+            {{ session('success') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
 
-    @if(session('error'))
+    @if (session('error'))
         <div class="alert alert-danger alert-custom alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ session('error') }}
+            {{ session('error') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
 
-    <!-- Header Modern -->
     <div class="header-modern">
         <div class="d-flex align-items-center justify-content-between mb-4">
             <div class="d-flex align-items-center">
@@ -498,8 +477,8 @@
         </div>
 
         <div>
-            <h4 class="fw-bold text-white mb-0">Halo, {{ $siswa->nama_lengkap ?? Auth::user()->username ?? 'Siswa' }}!
-                </h4>
+            <h4 class="fw-bold text-white mb-0">Halo, {{ $siswa->nama_lengkap ?? (Auth::user()->username ?? 'Siswa') }}!
+            </h4>
             <p class="text-white text-opacity-75 small fw-medium mt-1 mb-0">Siapkan QR Code ini saat kegiatan
                 berlangsung.</p>
         </div>
@@ -507,24 +486,20 @@
 
     <div class="container px-4">
 
-        <!-- Kartu Identitas & QR Code -->
         <div class="qr-card">
-            <div class="qr-badge">
-                <i class="bi bi-person-badge me-1"></i> Kartu Identitas Digital
-            </div>
+            <div class="qr-badge">Kartu Identitas Digital</div>
 
             <div class="qr-code-wrapper">
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data={{ $siswa->kode_qr ?? $siswa->nis ?? Auth::user()->username }}&bgcolor=ffffff&color=1e293b"
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data={{ $siswa->kode_qr ?? ($siswa->nis ?? Auth::user()->username) }}&bgcolor=ffffff&color=1e293b"
                     alt="QR Code Siswa">
             </div>
 
             <div class="student-info">
                 <h3 class="student-name">
-                    {{ $siswa->nama_lengkap ?? Auth::user()->username ?? 'Nama Siswa' }}
+                    {{ $siswa->nama_lengkap ?? (Auth::user()->username ?? 'Nama Siswa') }}
                 </h3>
 
                 <div class="student-class">
-                    <i class="bi bi-mortarboard-fill"></i>
                     Kelas {{ $siswa->kode_kelas ?? 'Belum diatur' }}
                 </div>
 
@@ -533,13 +508,11 @@
                 </span>
             </div>
 
-            <!-- ✅ Tombol Download QR Code -->
             <a href="{{ route('siswa.downloadQR') }}" class="btn-download-qr">
-                <i class="bi bi-download"></i> Unduh QR Code
+                Unduh QR Code
             </a>
         </div>
 
-        <!-- Ringkasan Hari Ini -->
         <div class="d-flex justify-content-between align-items-end mb-3 mt-4 px-1">
             <div class="section-title">STATUS HARI INI</div>
             <div class="text-primary" style="font-size: 0.8rem; font-weight: 600;" id="liveDate">Memuat...</div>
@@ -550,63 +523,34 @@
                 @php
                     $log = $attendanceToday->get($activity->id);
                     $status = $log ? $log->status_kehadiran : 'Belum';
-
-                    $icon = 'bi-calendar-check fs-5';
-                    $iconColor = 'text-secondary';
-
-                    if (stripos($activity->nama_kegiatan, 'pagi') !== false) {
-                        $icon = 'bi-sun-fill fs-5';
-                        $iconColor = 'text-warning';
-                    } elseif (stripos($activity->nama_kegiatan, 'dhuha') !== false) {
-                        $icon = 'bi-brightness-alt-high-fill fs-5';
-                        $iconColor = 'text-primary';
-                    } elseif (stripos($activity->nama_kegiatan, 'dhuhur') !== false) {
-                        $icon = 'bi-clock-fill fs-5';
-                        $iconColor = 'text-info';
-                    } elseif (stripos($activity->nama_kegiatan, 'ashar') !== false) {
-                        $icon = 'bi-sunset-fill fs-5';
-                        $iconColor = 'text-danger';
-                    }
                 @endphp
 
                 <div class="activity-item">
                     <div class="d-flex align-items-center gap-2">
-                        <i class="bi {{ $icon }} {{ $iconColor }}"></i>
                         <span class="act-title">{{ $activity->nama_kegiatan }}</span>
                     </div>
 
-                    @if(strtolower($status) === 'hadir')
-                        <span class="badge-status status-hadir">
-                            <i class="bi bi-check-lg me-1"></i>Hadir
-                        </span>
+                    @if (strtolower($status) === 'hadir')
+                        <span class="badge-status status-hadir">Hadir</span>
                     @elseif(strtolower($status) === 'selesai')
-                        <span class="badge-status status-hadir">
-                            <i class="bi bi-check-lg me-1"></i>Selesai
-                        </span>
+                        <span class="badge-status status-hadir">Selesai</span>
                     @elseif(strtolower($status) === 'sakit')
-                        <span class="badge-status status-sakit">
-                            <i class="bi bi-exclamation-lg me-1"></i>Sakit
-                        </span>
+                        <span class="badge-status status-sakit">Sakit</span>
                     @elseif(strtolower($status) === 'izin')
-                        <span class="badge-status status-izin">
-                            <i class="bi bi-exclamation-lg me-1"></i>Izin
-                        </span>
+                        <span class="badge-status status-izin">Izin</span>
                     @else
-                        <span class="badge-status status-belum">
-                            <i class="bi bi-dash-lg me-1"></i>Belum
-                        </span>
+                        <span class="badge-status status-belum">Belum</span>
                     @endif
                 </div>
             @empty
                 <div class="text-center text-muted py-3">
-                    <i class="bi bi-info-circle"></i> Belum ada kegiatan
+                    Belum ada kegiatan
                 </div>
             @endforelse
         </div>
 
     </div>
 
-    <!-- Navigasi Bawah - Sky Pill -->
     <div class="bottom-nav">
         <a href="/siswa/dashboard" class="nav-link active">
             <i class="bi bi-qr-code-scan"></i>
@@ -628,13 +572,16 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const dateOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+        const dateOptions = {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        };
         document.getElementById('liveDate').textContent = new Date().toLocaleDateString('id-ID', dateOptions);
 
-        // ✅ Auto hide alert setelah 3 detik
-        setTimeout(function () {
+        setTimeout(function() {
             const alerts = document.querySelectorAll('.alert-custom');
-            alerts.forEach(function (alert) {
+            alerts.forEach(function(alert) {
                 const bsAlert = new bootstrap.Alert(alert);
                 bsAlert.close();
             });

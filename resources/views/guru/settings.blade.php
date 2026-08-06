@@ -34,6 +34,7 @@
             color: var(--text-dark);
             min-height: 100vh;
             padding-bottom: 100px;
+            overflow-x: hidden;
         }
 
         /* ========== AWAN DEKORATIF ========== */
@@ -264,6 +265,41 @@
             transform: scale(0.98);
         }
 
+        /* ========== TOAST NOTIF ========== */
+        .toast-notif {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #1E293B;
+            color: white;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            z-index: 1100;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            transform: translateX(120%);
+            transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+            max-width: 320px;
+            width: fit-content;
+            min-width: 200px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            line-height: 1.4;
+            pointer-events: none;
+        }
+
+        .toast-notif.show {
+            transform: translateX(0);
+        }
+
+        .toast-notif.success {
+            background: #10B981;
+        }
+
+        .toast-notif.error {
+            background: #EF4444;
+        }
+
         /* ========== MODAL ========== */
         .modal-content {
             border-radius: 20px;
@@ -405,12 +441,17 @@
             }
         }
 
-        /* ========== TOAST ========== */
-        .toast-container {
-            z-index: 1100;
+        @media (max-width: 576px) {
+            .toast-notif {
+                top: 16px;
+                right: 16px;
+                max-width: 280px;
+                font-size: 0.78rem;
+                padding: 12px 18px;
+                min-width: 160px;
+            }
         }
 
-        /* ========== RESPONSIVE ========== */
         @media (max-width: 400px) {
             .header-modern {
                 padding: 20px 15px 35px 15px;
@@ -444,6 +485,11 @@
     <div class="cloud cloud-1"></div>
     <div class="cloud cloud-2"></div>
 
+    <!-- Toast Notification -->
+    <div id="toastNotif" class="toast-notif">
+        <span id="toastMessage"></span>
+    </div>
+
     <div class="header-modern d-flex align-items-center justify-content-between">
         <div class="d-flex align-items-center">
             <div class="logo-box me-3">
@@ -462,7 +508,7 @@
         <!-- Profil Akun -->
         <div class="profile-card" style="margin-top: -25px;">
             <div class="profile-avatar">
-                <i class="bi bi-person-fill"></i>
+                {{ strtoupper(substr(Auth::user()->username ?? 'G', 0, 1)) }}
             </div>
             <h5 class="fw-bold text-dark mb-1">{{ Auth::user()->username ?? 'Nama Guru' }}</h5>
             <div class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold"
@@ -476,32 +522,29 @@
 
         <!-- Menu Pengaturan -->
         <div class="settings-list">
-            <a href="#" class="settings-item">
+            <a href="#" class="settings-item" data-target="profil">
                 <div class="d-flex align-items-center">
                     <div class="settings-icon icon-blue"><i class="bi bi-person-badge"></i></div>
                     <div>
                         <div class="fw-bold" style="font-size: 0.95rem;">Profil Akun</div>
-                        <div class="text-secondary" style="font-size: 0.7rem;">Detail data pribadi</div>
                     </div>
                 </div>
                 <i class="bi bi-chevron-right text-secondary"></i>
             </a>
-            <a href="#" class="settings-item">
+            <a href="#" class="settings-item" data-target="password">
                 <div class="d-flex align-items-center">
                     <div class="settings-icon icon-purple"><i class="bi bi-lock-fill"></i></div>
                     <div>
                         <div class="fw-bold" style="font-size: 0.95rem;">Ubah Password</div>
-                        <div class="text-secondary" style="font-size: 0.7rem;">Perbarui keamanan akun</div>
                     </div>
                 </div>
                 <i class="bi bi-chevron-right text-secondary"></i>
             </a>
-            <a href="#" class="settings-item">
+            <a href="#" class="settings-item" data-target="tentang">
                 <div class="d-flex align-items-center">
                     <div class="settings-icon icon-green"><i class="bi bi-info-circle-fill"></i></div>
                     <div>
                         <div class="fw-bold" style="font-size: 0.95rem;">Tentang Aplikasi</div>
-                        <div class="text-secondary" style="font-size: 0.7rem;">Sistem Informasi Monitoring v1.0</div>
                     </div>
                 </div>
                 <i class="bi bi-chevron-right text-secondary"></i>
@@ -512,7 +555,7 @@
         <form action="{{ route('logout') }}" method="POST">
             @csrf
             <button type="submit" class="btn btn-logout shadow-sm mb-4">
-                <i class="bi bi-box-arrow-right fs-5"></i> Keluar dari Aplikasi
+                Logout
             </button>
         </form>
 
@@ -569,7 +612,7 @@
                         <div class="mb-3">
                             <label class="form-label small fw-bold text-secondary">Nama Lengkap</label>
                             <input type="text" name="nama_lengkap" class="form-control rounded-3"
-                                value="{{ Auth::user()->nama_lengkap ?? Auth::user()->username ?? '' }}">
+                                value="{{ Auth::user()->nama_lengkap ?? (Auth::user()->username ?? '') }}">
                         </div>
                     </div>
                     <div class="modal-footer border-0 pt-0">
@@ -596,16 +639,18 @@
                     <div class="modal-body pt-0">
                         <div class="mb-3">
                             <label class="form-label small fw-bold text-secondary">Password Lama</label>
-                            <input type="password" name="current_password" class="form-control rounded-3" required>
+                            <input type="password" name="current_password" class="form-control rounded-3" required
+                                autocomplete="current-password">
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold text-secondary">Password Baru</label>
-                            <input type="password" name="new_password" class="form-control rounded-3" required>
+                            <input type="password" name="new_password" class="form-control rounded-3" required
+                                autocomplete="new-password">
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold text-secondary">Konfirmasi Password Baru</label>
                             <input type="password" name="new_password_confirmation" class="form-control rounded-3"
-                                required>
+                                required autocomplete="new-password">
                         </div>
                     </div>
                     <div class="modal-footer border-0 pt-0">
@@ -652,52 +697,48 @@
         </div>
     </div>
 
-    <!-- Toast Notifikasi -->
-    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100;">
-        <div id="liveToast" class="toast border-0 shadow bg-success text-white" role="alert" aria-live="assertive"
-            aria-atomic="true" data-bs-autohide="true" data-bs-delay="3000">
-            <div class="d-flex">
-                <div class="toast-body">
-                    <i class="bi bi-check-circle-fill me-2"></i> <span id="toastMessage"></span>
-                </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-            </div>
-        </div>
-    </div>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        @if(session('success'))
-            const toastMessage = document.getElementById('toastMessage');
-            const toast = new bootstrap.Toast(document.getElementById('liveToast'));
-            toastMessage.innerText = "{{ session('success') }}";
-            toast.show();
+        function showNotif(message, type = 'success') {
+            const toast = document.getElementById('toastNotif');
+            const msg = document.getElementById('toastMessage');
+
+            toast.classList.remove('success', 'error', 'show');
+
+            if (type === 'success') {
+                toast.classList.add('success');
+            } else {
+                toast.classList.add('error');
+            }
+
+            msg.innerText = message;
+            toast.classList.add('show');
+
+            clearTimeout(window.toastTimeout);
+            window.toastTimeout = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        @if (session('success'))
+            showNotif("{{ session('success') }}", 'success');
         @endif
 
-            @if($errors->any())
-                const errorMsg = "{{ $errors->first() }}";
-                const toastMessageErr = document.getElementById('toastMessage');
-                const toastErr = new bootstrap.Toast(document.getElementById('liveToast'));
-                document.getElementById('liveToast').classList.remove('bg-success');
-                document.getElementById('liveToast').classList.add('bg-danger');
-                toastMessageErr.innerText = errorMsg;
-                toastErr.show();
-                setTimeout(() => {
-                    document.getElementById('liveToast').classList.remove('bg-danger');
-                    document.getElementById('liveToast').classList.add('bg-success');
-                }, 3000);
-            @endif
+        @if ($errors->any())
+            showNotif("{{ $errors->first() }}", 'error');
+        @endif
 
-        document.querySelectorAll('.settings-item').forEach((item, index) => {
+        document.querySelectorAll('.settings-item').forEach((item) => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
-                if (index === 0) {
+                const target = item.dataset.target;
+                if (target === 'profil') {
                     const modalProfil = new bootstrap.Modal(document.getElementById('modalProfil'));
                     modalProfil.show();
-                } else if (index === 1) {
+                } else if (target === 'password') {
                     const modalPassword = new bootstrap.Modal(document.getElementById('modalPassword'));
                     modalPassword.show();
-                } else if (index === 2) {
+                } else if (target === 'tentang') {
                     const modalTentang = new bootstrap.Modal(document.getElementById('modalTentang'));
                     modalTentang.show();
                 }

@@ -50,13 +50,14 @@
             align-items: center;
             justify-content: center;
             margin: 0;
+            padding: 20px;
+            overflow-x: hidden;
             position: relative;
-            overflow: hidden;
         }
 
         /* ========== AWAN DEKORATIF ========== */
         .cloud {
-            position: absolute;
+            position: fixed;
             background: rgba(255, 255, 255, 0.7);
             border-radius: 50%;
             filter: blur(50px);
@@ -119,7 +120,7 @@
 
         /* ========== AKSEN BIRU LANGIT ========== */
         .sky-accent {
-            position: absolute;
+            position: fixed;
             border-radius: 50%;
             opacity: 0.12;
             z-index: 0;
@@ -149,6 +150,7 @@
             max-width: 400px;
             padding: 20px;
             z-index: 10;
+            overflow: hidden;
         }
 
         /* ========== LOGIN CARD ========== */
@@ -353,6 +355,17 @@
             color: var(--sky-blue);
             font-weight: 500;
         }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 576px) {
+            .login-card {
+                padding: 30px 20px;
+            }
+
+            .login-wrapper {
+                padding: 10px;
+            }
+        }
     </style>
 </head>
 
@@ -391,8 +404,8 @@
                     </label>
                     <div class="input-group-custom">
                         <i class="bi bi-person input-icon"></i>
-                        <input type="text" name="username" class="form-control" placeholder="Masukkan username" required
-                            autofocus>
+                        <input type="text" name="username" class="form-control" placeholder="Masukkan username"
+                            required autofocus>
                     </div>
                 </div>
 
@@ -414,6 +427,7 @@
 
         </div>
     </main>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 

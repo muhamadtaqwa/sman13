@@ -34,9 +34,9 @@
             color: var(--text-dark);
             min-height: 100vh;
             padding-bottom: 100px;
+            overflow-x: hidden;
         }
 
-        /* ========== AWAN DEKORATIF ========== */
         .cloud {
             position: fixed;
             background: rgba(255, 255, 255, 0.6);
@@ -83,7 +83,6 @@
             }
         }
 
-        /* ========== HEADER SKYEDU ========== */
         .header-modern {
             background: linear-gradient(160deg, #3B82F6 0%, #60A5FA 50%, #93C5FD 100%);
             padding: 35px 20px 50px 20px;
@@ -132,7 +131,6 @@
             z-index: 1;
         }
 
-        /* ========== PROFILE CARD ========== */
         .profile-card {
             background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(15px);
@@ -161,7 +159,6 @@
             box-shadow: 0 8px 25px rgba(59, 130, 246, 0.35);
         }
 
-        /* ========== SECTION TITLE ========== */
         .section-title {
             font-size: 0.75rem;
             font-weight: 700;
@@ -183,7 +180,6 @@
             border-radius: 2px;
         }
 
-        /* ========== MENU GROUP ========== */
         .menu-group {
             background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(15px);
@@ -226,7 +222,6 @@
             font-size: 1.1rem;
         }
 
-        /* ========== LOGOUT BUTTON ========== */
         .btn-logout {
             background: #FEF2F2;
             color: #EF4444;
@@ -246,6 +241,41 @@
         .btn-logout:active {
             transform: scale(0.98);
             background: #FEE2E2;
+        }
+
+        /* ========== TOAST NOTIF ========== */
+        .toast-notif {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #1E293B;
+            color: white;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            z-index: 1100;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            transform: translateX(120%);
+            transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+            max-width: 320px;
+            width: fit-content;
+            min-width: 200px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            line-height: 1.4;
+            pointer-events: none;
+        }
+
+        .toast-notif.show {
+            transform: translateX(0);
+        }
+
+        .toast-notif.success {
+            background: #10B981;
+        }
+
+        .toast-notif.error {
+            background: #EF4444;
         }
 
         /* ========== MODAL ========== */
@@ -317,7 +347,6 @@
             font-weight: 600;
         }
 
-        /* ========== BOTTOM NAV - SKY PILL ========== */
         .bottom-nav {
             position: fixed;
             bottom: 16px;
@@ -378,7 +407,17 @@
             color: #3B82F6;
         }
 
-        /* ========== RESPONSIVE ========== */
+        @media (max-width: 576px) {
+            .toast-notif {
+                top: 16px;
+                right: 16px;
+                max-width: 280px;
+                font-size: 0.78rem;
+                padding: 12px 18px;
+                min-width: 160px;
+            }
+        }
+
         @media (max-width: 400px) {
             .header-modern {
                 padding: 25px 15px 45px 15px;
@@ -403,9 +442,12 @@
 
 <body>
 
-    <!-- Awan dekoratif -->
     <div class="cloud cloud-1"></div>
     <div class="cloud cloud-2"></div>
+
+    <div id="toastNotif" class="toast-notif">
+        <span id="toastMessage"></span>
+    </div>
 
     <div class="header-modern d-flex justify-content-between align-items-center">
         <div>
@@ -419,19 +461,6 @@
 
     <div class="container px-4" style="margin-top: -25px; position: relative; z-index: 10;">
 
-        <!-- Notifikasi -->
-        @if(session('success'))
-            <div class="alert alert-success rounded-3 py-2 px-3 small border-0 fw-bold mb-3">
-                {{ session('success') }}
-            </div>
-        @endif
-        @if(session('error'))
-            <div class="alert alert-danger rounded-3 py-2 px-3 small border-0 fw-bold mb-3">
-                {{ session('error') }}
-            </div>
-        @endif
-
-        <!-- Profil -->
         <div class="profile-card">
             <div class="profile-avatar">
                 {{ strtoupper(substr($user->username ?? 'A', 0, 1)) }}
@@ -441,12 +470,11 @@
                 </h5>
                 <div class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold text-capitalize"
                     style="font-size: 0.75rem;">
-                    <i class="bi bi-shield-check me-1"></i> Hak Akses: {{ $user->role ?? 'admin' }}
+                    {{ $user->role ?? 'admin' }}
                 </div>
             </div>
         </div>
 
-        <!-- Sistem Aplikasi -->
         <div class="section-title">Sistem Aplikasi</div>
         <div class="menu-group">
             <a href="#" class="menu-item">
@@ -457,7 +485,6 @@
                     <span class="fw-semibold" style="font-size: 0.95rem;">Tahun Ajaran</span>
                 </div>
                 <div class="d-flex align-items-center text-secondary">
-                    <small class="me-2 fw-bold text-primary">2026/2027</small>
                     <i class="bi bi-chevron-right small"></i>
                 </div>
             </a>
@@ -472,7 +499,6 @@
             </a>
         </div>
 
-        <!-- Bantuan & Informasi -->
         <div class="section-title">Bantuan & Informasi</div>
         <div class="menu-group">
             <a href="#" class="menu-item">
@@ -492,24 +518,20 @@
                     <span class="fw-semibold" style="font-size: 0.95rem;">Tentang Aplikasi</span>
                 </div>
                 <div class="d-flex align-items-center text-secondary">
-                    <small class="me-2 fw-bold">Versi 1.0</small>
                     <i class="bi bi-chevron-right small"></i>
                 </div>
             </a>
         </div>
 
-        <!-- Logout -->
         <form action="{{ route('logout') }}" method="POST" class="mb-4">
             @csrf
-            <button type="submit" class="btn-logout"
-                onclick="return confirm('Apakah Anda yakin ingin keluar dari sistem?')">
-                <i class="bi bi-power fs-5 me-2"></i> Keluar Aplikasi
+            <button type="submit" class="btn-logout">
+                Logout
             </button>
         </form>
 
     </div>
 
-    <!-- MODAL GANTI PASSWORD -->
     <div class="modal fade" id="modalGantiPassword" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -524,21 +546,22 @@
                         <div class="mb-3">
                             <label class="form-label">Password Lama</label>
                             <input type="password" name="password_lama" class="form-control" required
-                                placeholder="Masukkan password lama">
+                                placeholder="Masukkan password lama" autocomplete="current-password">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Password Baru</label>
                             <input type="password" name="password_baru" class="form-control" required
-                                placeholder="Minimal 6 karakter">
+                                placeholder="Minimal 6 karakter" autocomplete="new-password">
                         </div>
                         <div class="mb-2">
                             <label class="form-label">Konfirmasi Password Baru</label>
                             <input type="password" name="password_baru_confirmation" class="form-control" required
-                                placeholder="Ulangi password baru">
+                                placeholder="Ulangi password baru" autocomplete="new-password">
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn-light-custom w-100 mb-2" data-bs-dismiss="modal">Batal</button>
+                        <button type="button" class="btn-light-custom w-100 mb-2"
+                            data-bs-dismiss="modal">Batal</button>
                         <button type="submit" class="btn-primary-custom w-100 m-0">Simpan Password</button>
                     </div>
                 </form>
@@ -546,7 +569,6 @@
         </div>
     </div>
 
-    <!-- Navigasi Bawah - Sky Pill -->
     <div class="bottom-nav">
         <a href="/admin/dashboard" class="nav-link">
             <i class="bi bi-house-door-fill"></i>
@@ -571,6 +593,41 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showNotif(message, type = 'success') {
+            const toast = document.getElementById('toastNotif');
+            const msg = document.getElementById('toastMessage');
+
+            toast.classList.remove('success', 'error', 'show');
+
+            if (type === 'success') {
+                toast.classList.add('success');
+            } else {
+                toast.classList.add('error');
+            }
+
+            msg.innerText = message;
+            toast.classList.add('show');
+
+            clearTimeout(window.toastTimeout);
+            window.toastTimeout = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        @if (session('success'))
+            showNotif("{{ session('success') }}", 'success');
+        @endif
+
+        @if (session('error'))
+            showNotif("{{ session('error') }}", 'error');
+        @endif
+
+        @if ($errors->any())
+            showNotif("{{ $errors->first() }}", 'error');
+        @endif
+    </script>
+
 </body>
 
 </html>

@@ -34,6 +34,7 @@
             color: var(--text-dark);
             min-height: 100vh;
             padding-bottom: 100px;
+            overflow-x: hidden;
         }
 
         /* ========== AWAN DEKORATIF ========== */
@@ -211,6 +212,41 @@
             text-transform: uppercase;
         }
 
+        /* ========== TOAST NOTIF ========== */
+        .toast-notif {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #1E293B;
+            color: white;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            z-index: 1100;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            transform: translateX(120%);
+            transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+            max-width: 320px;
+            width: fit-content;
+            min-width: 200px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            line-height: 1.4;
+            pointer-events: none;
+        }
+
+        .toast-notif.show {
+            transform: translateX(0);
+        }
+
+        .toast-notif.success {
+            background: #10B981;
+        }
+
+        .toast-notif.error {
+            background: #EF4444;
+        }
+
         /* ========== BOTTOM NAV - SKY PILL ========== */
         .bottom-nav {
             position: fixed;
@@ -324,6 +360,17 @@
         }
 
         /* ========== RESPONSIVE ========== */
+        @media (max-width: 576px) {
+            .toast-notif {
+                top: 16px;
+                right: 16px;
+                max-width: 280px;
+                font-size: 0.78rem;
+                padding: 12px 18px;
+                min-width: 160px;
+            }
+        }
+
         @media (max-width: 400px) {
             .header-modern {
                 padding: 20px 15px 25px 15px;
@@ -357,6 +404,11 @@
     <div class="cloud cloud-1"></div>
     <div class="cloud cloud-2"></div>
 
+    <!-- Toast Notification -->
+    <div id="toastNotif" class="toast-notif">
+        <span id="toastMessage"></span>
+    </div>
+
     <div class="header-modern d-flex align-items-center justify-content-between">
         <div class="d-flex align-items-center">
             <div class="logo-box me-3">
@@ -383,15 +435,16 @@
                 <div class="text-secondary" style="font-size: 0.65rem; font-weight: 700; letter-spacing: 1px;">HARI
                     INI
                 </div>
-                <div id="liveDate" style="color: #3b82f6; font-size: 0.85rem; font-weight: 600;">Memuat tanggal...</div>
+                <div id="liveDate" style="color: #3b82f6; font-size: 0.85rem; font-weight: 600;">Memuat tanggal...
+                </div>
             </div>
         </div>
 
+        <!-- TAB KEGIATAN - Tanpa Ikon -->
         <div class="tab-scroll-container" id="activityTabs">
-            @foreach($kegiatan as $index => $item)
+            @foreach ($kegiatan as $item)
                 <div class="tab-kegiatan {{ $loop->first ? 'active' : '' }}"
                     onclick="changeTab('{{ $item->nama_kegiatan }}', this, {{ $item->id }})">
-                    {{ $loop->first ? '' : ($loop->iteration == 2 ? '' : ($loop->iteration == 3 ? '' : ($loop->iteration == 4 ? '' : ''))) }}
                     {{ $item->nama_kegiatan }}
                 </div>
             @endforeach
@@ -409,7 +462,7 @@
         </div>
 
         <div id="dataKelasContainer">
-            @foreach($dataKelas as $kelas)
+            @foreach ($dataKelas as $kelas)
                 <div class="class-card">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <div class="fw-bold text-dark" style="font-size: 1.1rem;">{{ $kelas->nama_kelas }}</div>
@@ -423,7 +476,8 @@
                             <div class="stat-label">Hadir</div>
                         </div>
                         <div class="stat-item" style="background: #fffbeb;">
-                            <div class="stat-value text-warning" style="color: #d97706 !important;">{{ $kelas->izin_sakit }}
+                            <div class="stat-value text-warning" style="color: #d97706 !important;">
+                                {{ $kelas->izin_sakit }}
                             </div>
                             <div class="stat-label">Izin/Sakit</div>
                         </div>
@@ -435,7 +489,7 @@
                 </div>
             @endforeach
 
-            @if(count($dataKelas) == 0)
+            @if (count($dataKelas) == 0)
                 <div class="alert alert-warning text-center">Belum ada data kelas</div>
             @endif
         </div>
@@ -471,12 +525,38 @@
     <script>
         let currentKegiatanId = {{ $kegiatan->first()->id ?? 1 }};
 
+        function showNotif(message, type = 'error') {
+            const toast = document.getElementById('toastNotif');
+            const msg = document.getElementById('toastMessage');
+
+            toast.classList.remove('success', 'error', 'show');
+
+            if (type === 'success') {
+                toast.classList.add('success');
+            } else {
+                toast.classList.add('error');
+            }
+
+            msg.innerText = message;
+            toast.classList.add('show');
+
+            clearTimeout(window.toastTimeout);
+            window.toastTimeout = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
         function updateClock() {
             const now = new Date();
             const hours = String(now.getHours()).padStart(2, '0');
             const minutes = String(now.getMinutes()).padStart(2, '0');
             document.getElementById('liveClock').textContent = `${hours}:${minutes}`;
-            const dateOptions = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+            const dateOptions = {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            };
             document.getElementById('liveDate').textContent = now.toLocaleDateString('id-ID', dateOptions);
         }
 
@@ -502,18 +582,23 @@
                     if (data.status === 'success') {
                         renderKelasData(data.dataKelas);
                     } else {
-                        document.getElementById('dataKelasContainer').innerHTML = '<div class="alert alert-danger">Gagal memuat data</div>';
+                        document.getElementById('dataKelasContainer').innerHTML =
+                            '<div class="alert alert-danger">Gagal memuat data</div>';
+                        showNotif('Gagal memuat data', 'error');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    document.getElementById('dataKelasContainer').innerHTML = '<div class="alert alert-danger">Terjadi kesalahan</div>';
+                    document.getElementById('dataKelasContainer').innerHTML =
+                        '<div class="alert alert-danger">Terjadi kesalahan</div>';
+                    showNotif('Terjadi kesalahan', 'error');
                 });
         }
 
         function renderKelasData(dataKelas) {
             if (dataKelas.length === 0) {
-                document.getElementById('dataKelasContainer').innerHTML = '<div class="alert alert-warning text-center">Belum ada data kelas</div>';
+                document.getElementById('dataKelasContainer').innerHTML =
+                    '<div class="alert alert-warning text-center">Belum ada data kelas</div>';
                 return;
             }
 

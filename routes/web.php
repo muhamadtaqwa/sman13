@@ -1,4 +1,5 @@
 <?php
+
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\WebAuthController;
 use App\Http\Controllers\DashboardController;
@@ -11,11 +12,10 @@ Route::post('/login-web', [WebAuthController::class, 'processLogin']);
 
 // --- JALUR TERPROTEKSI (Wajib Login) ---
 Route::middleware('auth')->group(function () {
-
     Route::post('/logout', [WebAuthController::class, 'logout'])->name('logout');
 
     // ==========================================
-    // 1. RUANGAN KHUSUS GURU (Dipindah ke atas agar dibaca duluan)
+    // 1. RUANGAN KHUSUS GURU
     // ==========================================
     Route::middleware('role:guru')->group(function () {
         Route::get('/guru/dashboard', [App\Http\Controllers\GuruController::class, 'dashboard'])->name('guru.dashboard');
@@ -51,32 +51,34 @@ Route::middleware('auth')->group(function () {
     // 3. RUANGAN KHUSUS SISWA
     // ==========================================
     Route::middleware('role:siswa')->group(function () {
-
         Route::get('/siswa/dashboard', [App\Http\Controllers\SiswaController::class, 'dashboard'])->name('siswa.dashboard');
         Route::get('/siswa/riwayat', [App\Http\Controllers\SiswaController::class, 'riwayat'])->name('siswa.riwayat');
         Route::get('/siswa/rekap', [App\Http\Controllers\SiswaController::class, 'rekap'])->name('siswa.rekap');
         Route::get('/siswa/settings', [App\Http\Controllers\SiswaController::class, 'settings'])->name('siswa.settings');
         Route::get('/siswa/download-qr', [App\Http\Controllers\SiswaController::class, 'downloadQR'])->name('siswa.downloadQR');
     });
-
 });
 
+// ==========================================
+// GENERATE AKUN SISWA (AMAN PAKAI TOKEN)
+// ==========================================
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
-Route::get('/generate-akun-siswa', function () {
-    // 1. Matikan batasan waktu PHP agar tidak berhenti di tengah jalan
-    set_time_limit(0);
+Route::get('/generate-akun-siswa/{token}', function ($token) {
+    // Ganti token sesuai keinginan kamu
+    if ($token !== 'rahasia123') {
+        abort(403, 'Token tidak valid!');
+    }
 
-    // 2. Trik Jitu: Enkripsi password HANYA 1 KALI di sini (Sangat menghemat waktu)
+    set_time_limit(0);
     $passwordDefault = Hash::make('siswa123');
 
     $semuaSiswa = DB::table('students')->get();
     $jumlahAkunBaru = 0;
 
     foreach ($semuaSiswa as $siswa) {
-        // Cek agar siswa yang sudah berhasil dibuat tadi tidak digandakan
         $cekAkun = User::where('username', $siswa->nis)->first();
 
         if (!$cekAkun) {
