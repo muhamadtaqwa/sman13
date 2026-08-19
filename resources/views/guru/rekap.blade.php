@@ -215,7 +215,7 @@
             background: #9CA3AF !important;
         }
 
-        /* MODE BULANAN/TAHUNAN - STATISTIK 2 KOLOM */
+        /* MODE BULANAN/TAHUNAN - STATISTIK 3 BARIS (Label Kiri, Nilai Kanan) */
         .status-statistik {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -227,7 +227,7 @@
             background: #F1F5F9;
             border-radius: 10px;
             padding: 8px 4px;
-            text-align: center;
+            text-align: left;
             font-size: 0.65rem;
             font-weight: 600;
         }
@@ -236,13 +236,24 @@
             font-size: 0.6rem;
             color: #64748B;
             margin-bottom: 4px;
-            font-weight: 600;
+            font-weight: 700;
+            text-align: center;
         }
 
-        .stat-angka {
-            font-size: 0.7rem;
-            font-weight: 600;
-            line-height: 1.4;
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 6px;
+            font-size: 0.65rem;
+        }
+
+        .stat-label {
+            color: #475569;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-weight: 700;
         }
 
         /* ========== TOAST NOTIF ========== */
@@ -408,6 +419,15 @@
 
             .stat-card {
                 padding: 6px 2px;
+            }
+
+            .stat-row {
+                font-size: 0.6rem;
+                padding: 1px 4px;
+            }
+
+            .stat-nama {
+                font-size: 0.55rem;
             }
 
             .stat-angka {
@@ -679,7 +699,7 @@
                     </div>`;
                 }
             } else {
-                // ========== MODE BULANAN/TAHUNAN = TEKS HADIR/IZIN/ALPA ==========
+                // ========== MODE BULANAN/TAHUNAN = 3 BARIS (Label Kiri, Nilai Kanan) ==========
                 const urutanKegiatan = ['Kehadiran Pagi', 'Sholat Dhuha', 'Sholat Dhuhur', 'Keputrian', 'Sholat Ashar',
                     'Sholat Maghrib', 'Sholat Isya', 'Sholat Subuh'
                 ];
@@ -709,12 +729,20 @@
                         let izin = (data.Izin || 0) + (data.Sakit || 0);
                         let alpa = data.Alpa || 0;
 
+                        // 3 baris dengan label di kiri, nilai di kanan
                         badges += `<div class="stat-card">
                             <div class="stat-nama">${shortName}</div>
-                            <div class="stat-angka">
-                                <span style="color:#22C55E;">Hadir ${hadir}</span><br>
-                                <span style="color:#EAB308;">Izin ${izin}</span><br>
-                                <span style="color:#EF4444;">Alpa ${alpa}</span>
+                            <div class="stat-row">
+                                <span class="stat-label">Hadir</span>
+                                <span class="stat-value" style="color:#22C55E;">${hadir}</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">Izin</span>
+                                <span class="stat-value" style="color:#EAB308;">${izin}</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">Alpa</span>
+                                <span class="stat-value" style="color:#EF4444;">${alpa}</span>
                             </div>
                         </div>`;
                     }
