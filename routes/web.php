@@ -43,7 +43,6 @@ Route::middleware('auth')->group(function () {
         Route::get('admin/rekap', [App\Http\Controllers\RekapController::class, 'index']);
         Route::get('admin/settings', [App\Http\Controllers\SettingsController::class, 'index']);
         Route::put('/admin/settings/password', [App\Http\Controllers\SettingsController::class, 'updatePassword'])
-            ->middleware('auth')
             ->name('settings.password');
     });
 
@@ -68,7 +67,7 @@ use Illuminate\Support\Facades\Hash;
 
 Route::get('/generate-akun-siswa/{token}', function ($token) {
     // Ganti token sesuai keinginan kamu
-    if ($token !== 'rahasia123') {
+    if ($token !== env('GENERATE_AKUN_TOKEN')) {
         abort(403, 'Token tidak valid!');
     }
 

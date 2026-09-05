@@ -14,7 +14,7 @@ return new class extends Migration {
             $table->id();
             $table->string('username')->unique(); // NIP atau NIS
             $table->string('password');
-            $table->enum('role', ['admin', 'guru', 'murid'])->default('murid');
+            $table->enum('role', ['admin', 'guru', 'siswa'])->default('siswa');
             $table->rememberToken();
             $table->timestamps();
         });

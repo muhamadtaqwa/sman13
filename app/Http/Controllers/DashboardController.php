@@ -34,7 +34,7 @@ class DashboardController extends Controller
             }
 
             $data['ringkasanPerKegiatan'] = $ringkasanPerKegiatan;
-            $data['firstActivityId'] = $activities->first()->id;
+            $data['firstActivityId'] = $activities->first()?->id ?? null;
 
             // Data grafik per kegiatan (6 hari terakhir)
             $chartData = [];

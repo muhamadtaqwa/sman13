@@ -171,12 +171,21 @@ class GuruController extends Controller
         }
 
         if ($mode === 'harian') {
-            $query->whereDate('attendance_logs.created_at', $waktu);
+            $query->where(function ($q) use ($waktu) {
+                $q->whereDate('attendance_logs.created_at', $waktu)
+                  ->orWhereNull('attendance_logs.created_at');
+            });
         } elseif ($mode === 'bulanan') {
-            $query->whereYear('attendance_logs.created_at', substr($waktu, 0, 4))
-                ->whereMonth('attendance_logs.created_at', substr($waktu, 5, 2));
+            $query->where(function ($q) use ($waktu) {
+                $q->whereYear('attendance_logs.created_at', substr($waktu, 0, 4))
+                  ->whereMonth('attendance_logs.created_at', substr($waktu, 5, 2))
+                  ->orWhereNull('attendance_logs.created_at');
+            });
         } elseif ($mode === 'tahunan') {
-            $query->whereYear('attendance_logs.created_at', $waktu);
+            $query->where(function ($q) use ($waktu) {
+                $q->whereYear('attendance_logs.created_at', $waktu)
+                  ->orWhereNull('attendance_logs.created_at');
+            });
         }
 
         $results = $query->get();
@@ -497,9 +506,7 @@ class GuruController extends Controller
         $user->username = $request->username;
         $user->email = $request->email;
 
-        if (isset($user->nama_lengkap)) {
-            $user->nama_lengkap = $request->nama_lengkap;
-        }
+        $user->nama_lengkap = $request->nama_lengkap;
 
         $user->save();
 

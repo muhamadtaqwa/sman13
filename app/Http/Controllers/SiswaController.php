@@ -43,7 +43,11 @@ class SiswaController extends Controller
         // Ambil gambar QR dari API
         $qrData = $siswa->kode_qr ?? $siswa->nis;
         $qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=500x500&data={$qrData}&bgcolor=ffffff&color=1e293b";
-        $image = file_get_contents($qrUrl);
+        $image = @file_get_contents($qrUrl);
+
+        if ($image === false) {
+            return back()->with('error', 'Gagal mengunduh QR Code. Periksa koneksi internet dan coba lagi.');
+        }
 
         // Nama file
         $fileName = 'QRCode_' . $siswa->nama_lengkap . '_' . $siswa->nis . '.png';
@@ -99,7 +103,7 @@ class SiswaController extends Controller
         $totalHadir = $logs->where('status_kehadiran', 'Hadir')->count();
         $totalIzin = $logs->where('status_kehadiran', 'Izin')->count();
         $totalSakit = $logs->where('status_kehadiran', 'Sakit')->count();
-        $totalAlpha = $logs->where('status_kehadiran', 'Alpha')->count();
+        $totalAlpha = $logs->where('status_kehadiran', 'Alpa')->count();
         $totalKegiatan = $logs->count();
 
         // Hitung persentase

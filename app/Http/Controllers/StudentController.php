@@ -59,7 +59,7 @@ class StudentController extends Controller
     // Fungsi Ubah Data & Password Siswa
     public function update(Request $request, $id)
     {
-        $student = Student::findOrFail($id);
+        $student = Student::where('nis', $id)->firstOrFail();
 
         $request->validate([
             'nama_lengkap' => 'required',
@@ -90,7 +90,7 @@ class StudentController extends Controller
     // Fungsi Hapus Siswa
     public function destroy($id)
     {
-        $student = Student::findOrFail($id);
+        $student = Student::where('nis', $id)->firstOrFail();
 
         // Hapus juga akun login-nya
         User::where('username', $student->nis)->delete();
