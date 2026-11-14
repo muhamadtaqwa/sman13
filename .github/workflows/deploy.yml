@@ -1,59 +1,62 @@
-name: Deploy Laravel via FTP
+name: Deploy SMAN 13 to Shared Hosting
 
 on:
   push:
     branches:
       - main
+      - master
+  workflow_dispatch: # Memungkinkan trigger deploy manual dari web GitHub
 
 jobs:
-  deploy:
-    name: Build & Deploy via FTP
+  build-and-deploy:
+    name: Build & Deploy
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🚚 Checkout Repository
+      - name: 1. Checkout Repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
 
-      - name: ⚙️ Setup PHP 8.2
+      - name: 2. Setup PHP 8.2
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, bcmath, zip, gd
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, bcmath, fileinfo
           coverage: none
 
-      - name: 📦 Install Composer Dependencies
-        run: composer install --no-dev --prefer-dist --optimize-autoloader --no-progress --no-interaction
+      - name: 3. Install Composer Dependencies (Production)
+        run: |
+          composer install --no-dev --prefer-dist --optimize-autoloader --no-progress --no-interaction
 
-      - name: ⚙️ Setup Node.js 20
+      - name: 4. Setup Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '20'
+          cache: 'npm'
 
-      - name: 🎨 Compile Assets (Vite)
+      - name: 5. Install NPM & Compile Vite Assets
         run: |
           npm ci || npm install
           npm run build
 
-      - name: 🚀 Sync Files via FTP
+      - name: 6. Clean Unnecessary Files Before Upload
+        run: |
+          rm -rf node_modules
+          rm -rf tests
+          rm -rf .github
+
+      - name: 7. Deploy to Shared Hosting via FTP/FTPS
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: /
-          protocol: ftps
+          port: ${{ secrets.FTP_PORT || 21 }}
+          protocol: ${{ secrets.FTP_PROTOCOL || 'ftp' }}
+          local-dir: ./
+          server-dir: ${{ secrets.FTP_SERVER_DIR || '/' }}
           exclude: |
             **/.git*
             **/.git*/**
-            **/node_modules/**
-            **/.env
-            **/.env.*
-            tests/**
-            phpunit.xml
-            .editorconfig
-            README.md
-            vite.config.js
-            package.json
-            package-lock.json
+            .env
+            .env.*
+            storage/logs/*.log
