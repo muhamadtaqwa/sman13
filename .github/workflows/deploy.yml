@@ -8,48 +8,41 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-deploy:
-    name: Build & Deploy
+  deploy:
+    name: Fast Deploy Code & Migrate
     runs-on: ubuntu-latest
 
     steps:
       - name: 1. Checkout Repository
         uses: actions/checkout@v4
 
-      - name: 2. Setup PHP 8.2
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, bcmath, fileinfo
-          coverage: none
-
-      - name: 3. Install Composer Dependencies (Production)
-        run: |
-          composer install --no-dev --prefer-dist --optimize-autoloader --no-progress --no-interaction
-
-      - name: 4. Clean Unnecessary Files Before Upload
-        run: |
-          rm -rf tests
-          rm -rf .github
-
-      - name: 5. Deploy to Shared Hosting via FTP/FTPS
+      - name: 2. Deploy Application Code via FTPS
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           port: ${{ secrets.FTP_PORT || 21 }}
-          protocol: ${{ secrets.FTP_PROTOCOL || 'ftp' }}
+          protocol: ${{ secrets.FTP_PROTOCOL || 'ftps' }}
           local-dir: ./
           server-dir: ${{ secrets.FTP_SERVER_DIR || '/' }}
           exclude: |
             **/.git*
             **/.git*/**
+            vendor/**
+            node_modules/**
             .env
             .env.*
-            storage/logs/*.log
+            storage/**
+            tests/**
+            phpunit.xml
+            .editorconfig
+            README.md
+            vite.config.js
+            package.json
+            package-lock.json
 
-      - name: 6. Trigger Database Migration & Cache Clear
+      - name: 3. Trigger Database Migration & Cache Clear
         run: |
           echo "Menjalankan migrasi database otomatis di hosting..."
           RESPONSE=$(curl -s -L "https://sman13.annuur.id/artisan-migrate/sman13_auto_migrate_secret_key" || true)
