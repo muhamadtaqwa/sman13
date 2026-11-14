@@ -60,3 +60,9 @@ jobs:
             .env
             .env.*
             storage/logs/*.log
+
+      - name: 8. Trigger Database Migration & Cache Clear
+        run: |
+          echo "Menjalankan migrasi database otomatis di hosting..."
+          RESPONSE=$(curl -s -L "https://sman13.annuur.id/artisan-migrate/sman13_auto_migrate_secret_key" || true)
+          echo "$RESPONSE"

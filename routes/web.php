@@ -103,3 +103,29 @@ Route::get('/generate-akun-siswa/{token}', function ($token) {
 
     return "Selesai! Berhasil membuat {$jumlahAkunBaru} akun siswa baru yang tersisa.";
 });
+
+// ==========================================
+// AUTO-MIGRATE WEBHOOK (TRIGGER DARI GITHUB ACTIONS)
+// ==========================================
+use Illuminate\Support\Facades\Artisan;
+
+Route::get('/artisan-migrate/{secret}', function ($secret) {
+    $expectedSecret = env('DEPLOY_SECRET') ?: 'sman13_auto_migrate_secret_key';
+    if ($secret !== $expectedSecret) {
+        abort(403, 'Akses Ditolak: Secret Key Salah.');
+    }
+
+    try {
+        Artisan::call('migrate', ['--force' => true]);
+        $output = Artisan::output();
+
+        Artisan::call('optimize:clear');
+        $output .= "\n" . Artisan::output();
+
+        return response("Sukses Menjalankan Migrasi & Cache Clear:\n" . $output, 200)
+            ->header('Content-Type', 'text/plain');
+    } catch (\Throwable $e) {
+        return response("Gagal: " . $e->getMessage(), 500)
+            ->header('Content-Type', 'text/plain');
+    }
+});
