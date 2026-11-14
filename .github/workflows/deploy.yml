@@ -5,7 +5,7 @@ on:
     branches:
       - main
       - master
-  workflow_dispatch: # Memungkinkan trigger deploy manual dari web GitHub
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
@@ -27,24 +27,12 @@ jobs:
         run: |
           composer install --no-dev --prefer-dist --optimize-autoloader --no-progress --no-interaction
 
-      - name: 4. Setup Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: 5. Install NPM & Compile Vite Assets
+      - name: 4. Clean Unnecessary Files Before Upload
         run: |
-          npm ci || npm install
-          npm run build
-
-      - name: 6. Clean Unnecessary Files Before Upload
-        run: |
-          rm -rf node_modules
           rm -rf tests
           rm -rf .github
 
-      - name: 7. Deploy to Shared Hosting via FTP/FTPS
+      - name: 5. Deploy to Shared Hosting via FTP/FTPS
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
@@ -61,7 +49,7 @@ jobs:
             .env.*
             storage/logs/*.log
 
-      - name: 8. Trigger Database Migration & Cache Clear
+      - name: 6. Trigger Database Migration & Cache Clear
         run: |
           echo "Menjalankan migrasi database otomatis di hosting..."
           RESPONSE=$(curl -s -L "https://sman13.annuur.id/artisan-migrate/sman13_auto_migrate_secret_key" || true)
