@@ -25,6 +25,84 @@ class GuruController extends Controller
         return view('admin.guru', compact('guru'));
     }
 
+    public function store(Request $request)
+    {
+        $request->validate([
+            'username' => 'required|string|min:3|max:255|unique:users,username',
+            'password' => 'required|string|min:6',
+        ]);
+
+        User::create([
+            'username' => $request->username,
+            'password' => Hash::make($request->password),
+            'role' => 'guru',
+        ]);
+
+        return back()->with('success', 'Akun guru baru berhasil ditambahkan.');
+    }
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'password' => 'required|string|min:6',
+        ]);
+
+        $user = User::where('id', $id)->where('role', 'guru')->firstOrFail();
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        return back()->with('success', 'Password guru berhasil diperbarui.');
+    }
+
+    public function destroy($id)
+    {
+        $user = User::where('id', $id)->where('role', 'guru')->firstOrFail();
+        $user->delete();
+
+        return back()->with('success', 'Akun guru berhasil dihapus.');
+    }
+
+    private function hitungKehadiranPerKelas($idKegiatan, $tanggal, $kelasList)
+    {
+        $totalPerKelas = \DB::table('students')
+            ->whereNotNull('kode_kelas')
+            ->select('kode_kelas', \DB::raw('count(*) as total'))
+            ->groupBy('kode_kelas')
+            ->pluck('total', 'kode_kelas');
+
+        $logs = \DB::table('attendance_logs')
+            ->join('students', 'attendance_logs.nis', '=', 'students.nis')
+            ->where('attendance_logs.id_kegiatan', $idKegiatan)
+            ->whereDate('attendance_logs.created_at', $tanggal)
+            ->select(
+                'students.kode_kelas',
+                \DB::raw("SUM(CASE WHEN attendance_logs.status_kehadiran = 'Hadir' THEN 1 ELSE 0 END) as hadir"),
+                \DB::raw("SUM(CASE WHEN attendance_logs.status_kehadiran IN ('Izin', 'Sakit') THEN 1 ELSE 0 END) as izin_sakit")
+            )
+            ->groupBy('students.kode_kelas')
+            ->get()
+            ->keyBy('kode_kelas');
+
+        $dataKelas = [];
+        foreach ($kelasList as $kelas) {
+            $namaKelas = $kelas->kode_kelas;
+            $totalSiswa = (int) ($totalPerKelas[$namaKelas] ?? 0);
+            $hadir = (int) ($logs[$namaKelas]->hadir ?? 0);
+            $izinSakit = (int) ($logs[$namaKelas]->izin_sakit ?? 0);
+            $belum = max(0, $totalSiswa - $hadir - $izinSakit);
+
+            $dataKelas[] = [
+                'nama_kelas' => $namaKelas,
+                'total_siswa' => $totalSiswa,
+                'hadir' => $hadir,
+                'izin_sakit' => $izinSakit,
+                'belum' => $belum
+            ];
+        }
+
+        return $dataKelas;
+    }
+
     public function dashboard()
     {
         $kegiatan = \DB::table('activities')->orderBy('id')->get();
@@ -37,45 +115,15 @@ class GuruController extends Controller
             ->get();
 
         $hariIni = date('Y-m-d');
-        $dataKelas = [];
+        $kegiatanPertama = $kegiatan->first();
+        $idKegiatan = $kegiatanPertama ? $kegiatanPertama->id : 1;
 
-        foreach ($kelasList as $kelas) {
-            $siswaDiKelas = \DB::table('students')
-                ->where('kode_kelas', $kelas->kode_kelas)
-                ->pluck('nis')
-                ->toArray();
-
-            $totalSiswa = count($siswaDiKelas);
-            $kegiatanPertama = $kegiatan->first();
-            $idKegiatan = $kegiatanPertama ? $kegiatanPertama->id : 1;
-
-            $hadir = \DB::table('attendance_logs')
-                ->whereIn('nis', $siswaDiKelas)
-                ->where('id_kegiatan', $idKegiatan)
-                ->whereDate('created_at', $hariIni)
-                ->where('status_kehadiran', 'Hadir')
-                ->count();
-
-            $izinSakit = \DB::table('attendance_logs')
-                ->whereIn('nis', $siswaDiKelas)
-                ->where('id_kegiatan', $idKegiatan)
-                ->whereDate('created_at', $hariIni)
-                ->whereIn('status_kehadiran', ['Izin', 'Sakit'])
-                ->count();
-
-            $belum = $totalSiswa - $hadir - $izinSakit;
-
-            $dataKelas[] = (object) [
-                'nama_kelas' => $kelas->kode_kelas,
-                'total_siswa' => $totalSiswa,
-                'hadir' => $hadir,
-                'izin_sakit' => $izinSakit,
-                'belum' => $belum
-            ];
-        }
+        $rawKelas = $this->hitungKehadiranPerKelas($idKegiatan, $hariIni, $kelasList);
+        $dataKelas = array_map(fn($item) => (object) $item, $rawKelas);
 
         return view('guru.dashboard', compact('kegiatan', 'dataKelas'));
     }
+
     public function getDataByKegiatan($kegiatanId)
     {
         $hariIni = date('Y-m-d');
@@ -87,40 +135,7 @@ class GuruController extends Controller
             ->orderBy('kode_kelas')
             ->get();
 
-        $dataKelas = [];
-
-        foreach ($kelasList as $kelas) {
-            $siswaDiKelas = \DB::table('students')
-                ->where('kode_kelas', $kelas->kode_kelas)
-                ->pluck('nis')
-                ->toArray();
-
-            $totalSiswa = count($siswaDiKelas);
-
-            $hadir = \DB::table('attendance_logs')
-                ->whereIn('nis', $siswaDiKelas)
-                ->where('id_kegiatan', $kegiatanId)
-                ->whereDate('created_at', $hariIni)
-                ->where('status_kehadiran', 'Hadir')
-                ->count();
-
-            $izinSakit = \DB::table('attendance_logs')
-                ->whereIn('nis', $siswaDiKelas)
-                ->where('id_kegiatan', $kegiatanId)
-                ->whereDate('created_at', $hariIni)
-                ->whereIn('status_kehadiran', ['Izin', 'Sakit'])
-                ->count();
-
-            $belum = $totalSiswa - $hadir - $izinSakit;
-
-            $dataKelas[] = [
-                'nama_kelas' => $kelas->kode_kelas,
-                'total_siswa' => $totalSiswa,
-                'hadir' => $hadir,
-                'izin_sakit' => $izinSakit,
-                'belum' => $belum
-            ];
-        }
+        $dataKelas = $this->hitungKehadiranPerKelas($kegiatanId, $hariIni, $kelasList);
 
         return response()->json([
             'status' => 'success',
@@ -155,7 +170,17 @@ class GuruController extends Controller
     private function getRekapData($waktu, $kelas, $mode)
     {
         $query = \DB::table('students')
-            ->leftJoin('attendance_logs', 'students.nis', '=', 'attendance_logs.nis')
+            ->leftJoin('attendance_logs', function ($join) use ($waktu, $mode) {
+                $join->on('students.nis', '=', 'attendance_logs.nis');
+                if ($mode === 'harian') {
+                    $join->whereDate('attendance_logs.created_at', $waktu);
+                } elseif ($mode === 'bulanan') {
+                    $join->whereYear('attendance_logs.created_at', substr($waktu, 0, 4))
+                         ->whereMonth('attendance_logs.created_at', substr($waktu, 5, 2));
+                } elseif ($mode === 'tahunan') {
+                    $join->whereYear('attendance_logs.created_at', $waktu);
+                }
+            })
             ->leftJoin('activities', 'attendance_logs.id_kegiatan', '=', 'activities.id')
             ->select(
                 'students.nis',
@@ -170,25 +195,7 @@ class GuruController extends Controller
             $query->where('students.kode_kelas', $kelas);
         }
 
-        if ($mode === 'harian') {
-            $query->where(function ($q) use ($waktu) {
-                $q->whereDate('attendance_logs.created_at', $waktu)
-                  ->orWhereNull('attendance_logs.created_at');
-            });
-        } elseif ($mode === 'bulanan') {
-            $query->where(function ($q) use ($waktu) {
-                $q->whereYear('attendance_logs.created_at', substr($waktu, 0, 4))
-                  ->whereMonth('attendance_logs.created_at', substr($waktu, 5, 2))
-                  ->orWhereNull('attendance_logs.created_at');
-            });
-        } elseif ($mode === 'tahunan') {
-            $query->where(function ($q) use ($waktu) {
-                $q->whereYear('attendance_logs.created_at', $waktu)
-                  ->orWhereNull('attendance_logs.created_at');
-            });
-        }
-
-        $results = $query->get();
+        $results = $query->orderBy('students.nama_lengkap')->get();
 
         $dataSiswa = [];
         foreach ($results as $row) {
@@ -220,40 +227,32 @@ class GuruController extends Controller
     }
     private function getRekapDataStatistik($waktu, $kelas, $mode)
     {
-        if ($mode === 'bulanan') {
-            $tahun = substr($waktu, 0, 4);
-            $bulan = substr($waktu, 5, 2);
-            $query = \DB::table('students')
-                ->leftJoin('attendance_logs', 'students.nis', '=', 'attendance_logs.nis')
-                ->leftJoin('activities', 'attendance_logs.id_kegiatan', '=', 'activities.id')
-                ->select(
-                    'students.nis',
-                    'students.nama_lengkap',
-                    'students.kode_kelas',
-                    'attendance_logs.status_kehadiran',
-                    'activities.nama_kegiatan'
-                )
-                ->whereYear('attendance_logs.created_at', $tahun)
-                ->whereMonth('attendance_logs.created_at', $bulan);
-        } else { // tahunan
-            $query = \DB::table('students')
-                ->leftJoin('attendance_logs', 'students.nis', '=', 'attendance_logs.nis')
-                ->leftJoin('activities', 'attendance_logs.id_kegiatan', '=', 'activities.id')
-                ->select(
-                    'students.nis',
-                    'students.nama_lengkap',
-                    'students.kode_kelas',
-                    'attendance_logs.status_kehadiran',
-                    'activities.nama_kegiatan'
-                )
-                ->whereYear('attendance_logs.created_at', $waktu);
-        }
+        $query = \DB::table('students')
+            ->leftJoin('attendance_logs', function ($join) use ($waktu, $mode) {
+                $join->on('students.nis', '=', 'attendance_logs.nis');
+                if ($mode === 'bulanan') {
+                    $tahun = substr($waktu, 0, 4);
+                    $bulan = substr($waktu, 5, 2);
+                    $join->whereYear('attendance_logs.created_at', $tahun)
+                         ->whereMonth('attendance_logs.created_at', $bulan);
+                } else { // tahunan
+                    $join->whereYear('attendance_logs.created_at', $waktu);
+                }
+            })
+            ->leftJoin('activities', 'attendance_logs.id_kegiatan', '=', 'activities.id')
+            ->select(
+                'students.nis',
+                'students.nama_lengkap',
+                'students.kode_kelas',
+                'attendance_logs.status_kehadiran',
+                'activities.nama_kegiatan'
+            );
 
         if ($kelas !== 'semua') {
             $query->where('students.kode_kelas', $kelas);
         }
 
-        $results = $query->get();
+        $results = $query->orderBy('students.nama_lengkap')->get();
 
         $dataSiswa = [];
         $allKegiatan = \DB::table('activities')->pluck('nama_kegiatan')->toArray();
@@ -499,7 +498,7 @@ class GuruController extends Controller
 
         if ($request->username !== $user->username) {
             $request->validate([
-                'username' => 'unique:users,username'
+                'username' => 'unique:users,username,' . $user->id,
             ]);
         }
 

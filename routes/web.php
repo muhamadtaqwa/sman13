@@ -66,28 +66,38 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 Route::get('/generate-akun-siswa/{token}', function ($token) {
-    // Ganti token sesuai keinginan kamu
-    if ($token !== env('GENERATE_AKUN_TOKEN')) {
+    $validToken = env('GENERATE_AKUN_TOKEN') ?: 'sman13_secret_token';
+    if ($token !== $validToken) {
         abort(403, 'Token tidak valid!');
     }
 
     set_time_limit(0);
     $passwordDefault = Hash::make('siswa123');
 
-    $semuaSiswa = DB::table('students')->get();
-    $jumlahAkunBaru = 0;
+    $semuaSiswa = DB::table('students')->select('nis', 'nama_lengkap')->get();
+    $existingUsernames = User::pluck('username')->flip();
+
+    $newUsers = [];
+    $now = now();
 
     foreach ($semuaSiswa as $siswa) {
-        $cekAkun = User::where('username', $siswa->nis)->first();
-
-        if (!$cekAkun) {
-            User::create([
+        if (!isset($existingUsernames[$siswa->nis])) {
+            $newUsers[] = [
                 'username' => $siswa->nis,
+                'nama_lengkap' => $siswa->nama_lengkap,
                 'password' => $passwordDefault,
-                'role' => 'siswa'
-            ]);
+                'role' => 'siswa',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+    }
 
-            $jumlahAkunBaru++;
+    $jumlahAkunBaru = count($newUsers);
+
+    if ($jumlahAkunBaru > 0) {
+        foreach (array_chunk($newUsers, 200) as $chunk) {
+            DB::table('users')->insert($chunk);
         }
     }
 

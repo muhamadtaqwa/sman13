@@ -40,13 +40,18 @@ class SiswaController extends Controller
             return back()->with('error', 'QR Code tidak ditemukan.');
         }
 
-        // Ambil gambar QR dari API
+        // Ambil gambar QR dari API dengan batas timeout aman agar tidak membebani server
         $qrData = $siswa->kode_qr ?? $siswa->nis;
         $qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=500x500&data={$qrData}&bgcolor=ffffff&color=1e293b";
-        $image = @file_get_contents($qrUrl);
 
-        if ($image === false) {
-            return back()->with('error', 'Gagal mengunduh QR Code. Periksa koneksi internet dan coba lagi.');
+        try {
+            $httpResponse = \Illuminate\Support\Facades\Http::timeout(6)->get($qrUrl);
+            if (!$httpResponse->successful()) {
+                return back()->with('error', 'Gagal mengunduh QR Code dari server penyedia. Silakan coba lagi.');
+            }
+            $image = $httpResponse->body();
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Koneksi ke server QR Code timeout atau gagal. Periksa koneksi internet dan coba lagi.');
         }
 
         // Nama file

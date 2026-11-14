@@ -49,9 +49,13 @@
         }
 
         .info-row {
-            display: flex;
-            gap: 30px;
-            flex-wrap: wrap;
+            width: 100%;
+        }
+
+        .info-item {
+            display: inline-block;
+            width: 32%;
+            vertical-align: top;
         }
 
         .info-label {

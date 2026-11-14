@@ -26,26 +26,24 @@ class RekapController extends Controller
 
         $students = $query->get();
 
-        // 3. Hitung rekap kehadiran per siswa (hari ini)
+        // 3. Hitung rekap kehadiran per siswa (hari ini) secara agregat (1 query efisien)
+        $todayLogs = AttendanceLog::whereDate('created_at', Carbon::today())
+            ->select('nis', 'status_kehadiran', \Illuminate\Support\Facades\DB::raw('count(*) as total'))
+            ->groupBy('nis', 'status_kehadiran')
+            ->get();
+
+        $logMap = [];
+        foreach ($todayLogs as $log) {
+            $logMap[$log->nis][strtolower($log->status_kehadiran)] = (int) $log->total;
+        }
+
         $rekap = [];
         foreach ($students as $student) {
             $rekap[$student->nis] = [
-                'hadir' => AttendanceLog::whereDate('created_at', Carbon::today())
-                    ->where('nis', $student->nis)
-                    ->where('status_kehadiran', 'Hadir')
-                    ->count(),
-                'sakit' => AttendanceLog::whereDate('created_at', Carbon::today())
-                    ->where('nis', $student->nis)
-                    ->where('status_kehadiran', 'Sakit')
-                    ->count(),
-                'izin' => AttendanceLog::whereDate('created_at', Carbon::today())
-                    ->where('nis', $student->nis)
-                    ->where('status_kehadiran', 'Izin')
-                    ->count(),
-                'alpa' => AttendanceLog::whereDate('created_at', Carbon::today())
-                    ->where('nis', $student->nis)
-                    ->where('status_kehadiran', 'Alpa')
-                    ->count(),
+                'hadir' => $logMap[$student->nis]['hadir'] ?? 0,
+                'sakit' => $logMap[$student->nis]['sakit'] ?? 0,
+                'izin'  => $logMap[$student->nis]['izin'] ?? 0,
+                'alpa'  => $logMap[$student->nis]['alpa'] ?? 0,
             ];
         }
 

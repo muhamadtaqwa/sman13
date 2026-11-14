@@ -19,12 +19,14 @@ class AttendanceController extends Controller
             'id_petugas' => 'required'
         ]);
 
-        $nis = $request->kode_qr; // Karena kesepakatan kita: Kode QR = NIS
+        $scannedCode = $request->kode_qr;
         $idKegiatan = $request->id_kegiatan;
         $today = Carbon::today();
 
-        // 2. Cek apakah NIS terdaftar di database
-        $student = Student::where('nis', $nis)->first();
+        // 2. Cek apakah QR atau NIS terdaftar di database
+        $student = Student::where('kode_qr', $scannedCode)
+            ->orWhere('nis', $scannedCode)
+            ->first();
 
         if (!$student) {
             return response()->json([
@@ -32,6 +34,8 @@ class AttendanceController extends Controller
                 'message' => 'QR / NIS tidak dikenali di sistem!'
             ], 404);
         }
+
+        $nis = $student->nis;
 
         // 3. Cek Duplikasi: Apakah anak ini sudah scan untuk kegiatan ini pada hari ini?
         $alreadyScanned = AttendanceLog::where('nis', $nis)

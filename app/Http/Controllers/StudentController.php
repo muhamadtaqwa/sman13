@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class StudentController extends Controller
@@ -36,22 +37,23 @@ class StudentController extends Controller
             'password' => 'required|min:6'
         ]);
 
-        // 1. Simpan ke tabel students
-        // 1. Simpan ke tabel students dengan kode QR otomatis
-        Student::create([
-            'nis' => $request->nis,
-            'nama_lengkap' => $request->nama_lengkap,
-            'kode_kelas' => $request->kode_kelas,
-            'kode_qr' => Str::random(10), // Sistem otomatis membuat 10 karakter acak
-        ]);
+        DB::transaction(function () use ($request) {
+            // 1. Simpan ke tabel students dengan kode QR otomatis
+            Student::create([
+                'nis' => $request->nis,
+                'nama_lengkap' => $request->nama_lengkap,
+                'kode_kelas' => $request->kode_kelas,
+                'kode_qr' => Str::random(10),
+            ]);
 
-        // 2. Buat akun login di tabel users
-        User::create([
-            'name' => $request->nama_lengkap,
-            'username' => $request->nis, // NIS dijadikan username login
-            'password' => Hash::make($request->password), // Enkripsi password
-            'role' => 'siswa',
-        ]);
+            // 2. Buat akun login di tabel users
+            User::create([
+                'username' => $request->nis,
+                'nama_lengkap' => $request->nama_lengkap,
+                'password' => Hash::make($request->password),
+                'role' => 'siswa',
+            ]);
+        });
 
         return back()->with('success', 'Siswa berhasil ditambahkan');
     }
@@ -66,23 +68,24 @@ class StudentController extends Controller
             'kode_kelas' => 'required',
         ]);
 
-        // 1. Update data di tabel students
-        $student->update([
-            'nama_lengkap' => $request->nama_lengkap,
-            'kode_kelas' => $request->kode_kelas,
-        ]);
+        DB::transaction(function () use ($request, $student) {
+            // 1. Update data di tabel students
+            $student->update([
+                'nama_lengkap' => $request->nama_lengkap,
+                'kode_kelas' => $request->kode_kelas,
+            ]);
 
-        // 2. Update data di tabel users
-        $user = User::where('username', $student->nis)->first();
-        if ($user) {
-            $user->name = $request->nama_lengkap;
+            // 2. Update data di tabel users
+            $user = User::where('username', $student->nis)->first();
+            if ($user) {
+                $user->nama_lengkap = $request->nama_lengkap;
 
-            // Jika kolom password diisi oleh admin, maka ganti passwordnya
-            if ($request->filled('password')) {
-                $user->password = Hash::make($request->password);
+                if ($request->filled('password')) {
+                    $user->password = Hash::make($request->password);
+                }
+                $user->save();
             }
-            $user->save();
-        }
+        });
 
         return back()->with('success', 'Data siswa berhasil diperbarui');
     }
@@ -92,11 +95,10 @@ class StudentController extends Controller
     {
         $student = Student::where('nis', $id)->firstOrFail();
 
-        // Hapus juga akun login-nya
-        User::where('username', $student->nis)->delete();
-
-        // Hapus data siswanya
-        $student->delete();
+        DB::transaction(function () use ($student) {
+            User::where('username', $student->nis)->delete();
+            $student->delete();
+        });
 
         return back()->with('success', 'Siswa berhasil dihapus');
     }

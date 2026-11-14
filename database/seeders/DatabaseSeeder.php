@@ -46,7 +46,7 @@ class DatabaseSeeder extends Seeder
             [
                 'username' => '1001',
                 'password' => Hash::make('100115082010'),
-                'role' => 'murid',
+                'role' => 'siswa',
                 'created_at' => $now,
                 'updated_at' => $now
             ],
@@ -55,7 +55,7 @@ class DatabaseSeeder extends Seeder
             [
                 'username' => '1002',
                 'password' => Hash::make('100220052010'),
-                'role' => 'murid',
+                'role' => 'siswa',
                 'created_at' => $now,
                 'updated_at' => $now
             ]
